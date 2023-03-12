@@ -2,14 +2,6 @@
   <h1 class="display-5 fw-bold">Hello!</h1>
   <div class="col-lg-6 mx-auto">
     <p *ngIf="blockNumber && blockNumber > 0" class="lead mb-4">We are connected to the Goerli Blockchain at the block <strong> {{blockNumber}}</strong></p>
-    <div *ngIf="transactions && transactions.length > 0">
-      <p>Transactions lists:</p>
-      <ul>
-        <li *ngFor="let transaction of transactions; let i = index">
-          Transaction #{{i}}: {{transaction}}
-        </li>
-      </ul>
-    </div>
     <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
       <button type="button" class="btn btn-primary btn-lg px-4 gap-3" (click)="syncBlock()">Sync</button>
       <button type="button" class="btn btn-outline-secondary btn-lg px-4" (click)="clearBlock()">Clear</button>
