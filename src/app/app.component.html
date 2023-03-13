@@ -6,12 +6,12 @@
       <button type="button" class="btn btn-success btn-lg px-4 gap-3 my-4 mx-2" (click)="createWallet()">
         {{userWallet ? "Create another" : "Create"}} Wallet
       </button>
-      <button #importButton type="button"  class="btn btn-danger btn-lg px-4 gap-3 my-4 mx-2" (click)="importWallet(pKey.value)">
-        {{userWallet ? "import another" : "import a"}} Wallet
+      <button #importButton type="button"  class="btn btn-danger btn-lg px-4 gap-3 my-4 mx-2" (click)="importWallet(privateKey.value)">
+        {{userWallet ? "Import another" : "Import a"}} Wallet
       </button>
       <div>
         <p>Private Key:</p>
-        <input #pKey type="string" class="input">
+        <input #privateKey type="string" class="input">
       </div>
       <div class="card mt-4 mx-auto" *ngIf="userWallet">
         <div class="card-body">
@@ -20,7 +20,7 @@
             <a href="https://mumbai.polygonscan.com/address//{{ userWallet.address }}"
               target="_blank">{{ userWallet.address }}</a> 
           </h6>
-          <p class="card-text"> pkey: {{ userWallet.privateKey }} </p>
+          <p class="card-text"> privateKey: {{ userWallet.privateKey }} </p>
           <p class="card-text"> Balance: {{ userEthBalance }} ETH </p>
           <p class="card-text">
             Balance: {{ userTokenBalance }} MTK
@@ -36,6 +36,35 @@
           <input #mintAmount type="number" min="0" max="10" value="0" class="input">
         </div>
       </div>
+      <div class="card mt-4 mx-auto" *ngIf="userWallet">
+        <div class="card-body">
+          <h5 class="card-title">Cast Vote</h5>
+          <button
+            type="button"
+            class="btn btn-primary btn-lg px-4 gap-3 my-4 mt-4"
+            (click)="castVote(proposal.value, votes.value)"
+          >
+            Cast Vote
+          </button>
+          <p>Proposal #:</p>
+          <input #proposal type="number" min="1" max="3" value="0" class="input">
+          <p>Number of Votes:</p>
+          <input #votes type="number" min="1" max="10" value="0" class="input">
+        </div>
+      </div>
+      <div class="card mt-4 mx-auto" *ngIf="userWallet">
+        <div class="card-body">
+          <h5 class="card-title">Winning Proposal</h5>
+          <button
+            type="button"
+            class="btn btn-primary btn-lg px-4 gap-3 my-4 mt-4"
+            (click)="getWinningProposal()"
+          >
+            See Results
+          </button>
+          <p class="card-text"> {{ winningProposal }} </p>
+        </div>
+      </div>
       <div class="card mt-4 mx-auto" *ngIf="tokenContractAddress">
         <div class="card-body">
           <h5 class="card-title">Token Contract</h5>
@@ -45,7 +74,16 @@
           </h6>
           <p class="card-text"> Total Supply: {{ tokenTotalSupply }} MTK </p>
         </div>
-      </div> 
+      </div>
+      <div class="card mt-4 mx-auto" *ngIf="ballotContractAddress">
+        <div class="card-body">
+          <h5 class="card-title">Ballot Contract</h5>
+          <h6 class="card-subtitle mb-2 text-muted">Address: 
+            <a href="https://mumbai.polygonscan.com/address//{{ ballotContractAddress }}"
+              target="_blank">{{ ballotContractAddress }}</a> 
+          </h6>
+        </div>
+      </div>
     </div>
     <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4">
     <button type="button" class="btn btn-primary btn-lg px-4 gap-3" (click)="syncBlock()">Sync</button>

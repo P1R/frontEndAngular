@@ -3,9 +3,12 @@ import { ethers, Wallet, utils, Contract, BigNumber } from 'ethers';
 import { env } from '../environment/env';
 import { HttpClient } from '@angular/common/http'; 
 import tokenJson from '../assets/MyToken.json';
+import ballotJson from '../assets/Ballot.json';
 
-const API_URL = 'http://10.162.235.88:3000/contract-address';
-const MINT_TOKENS_URL = "http://10.162.235.88:3000/request-tokens";
+const CONTRACT_ADDRESS_URL = `http://${env.api}/contract-address`;
+const BALLOT_ADDRESS_URL = `http://${env.api}/ballot-address`;
+const MINT_TOKENS_URL = `http://${env.api}/request-tokens`;
+const WINNING_PROPOSAL_URL = `http://${env.api}/winning-proposal`;
 
 @Component({
   selector: 'app-root',
@@ -22,6 +25,9 @@ export class AppComponent {
   tokenContractAddress: string | undefined;
   tokenContract: Contract | undefined;
   tokenTotalSupply: number | string | undefined;
+  ballotContractAddress: string | undefined;
+  ballotContract: Contract | undefined;
+  winningProposal: string | undefined;
 
   constructor(private http: HttpClient) {
     this.provider = new ethers.providers.AlchemyProvider(
@@ -31,22 +37,31 @@ export class AppComponent {
 
     // create logic to verify if is or not an imported 
     this.importedWallet = false;
-  }
+  };
 
-  getTokenAddress(){
-    return this.http.get<{ address: string }>(API_URL);
-  }
+  getContractAddress() {
+    return this.http.get<{ address: string }>(CONTRACT_ADDRESS_URL);
+  };
 
-  syncBlock(){
+  getBallotAddress() {
+    return this.http.get<{ address: string }>(BALLOT_ADDRESS_URL);
+  };
+
+  syncBlock() {
     this.blockNumber = "loading...";
+    this.winningProposal = "unknown";
     this.provider.getBlock('latest').then((block) => {
       this.blockNumber = block.number;
     });
-    this.getTokenAddress().subscribe((response) => {
+    this.getContractAddress().subscribe((response) => {
       this.tokenContractAddress = response.address;
       this.updateTokenInfo();
     });
-  }
+    this.getBallotAddress().subscribe((response) => {
+      this.ballotContractAddress = response.address;
+      this.updateTokenInfo();
+    });
+  };
 
   updateTokenInfo() {
     if (!this.tokenContractAddress) return;
@@ -60,29 +75,45 @@ export class AppComponent {
       const totalSupplyStr = utils.formatEther(totalSupplyBN);
       this.tokenTotalSupply = parseFloat(totalSupplyStr);
     });
-  }
+  };
+
+  updateBallotInfo() {
+    if (!this.ballotContractAddress) return;
+    this.ballotContract = new Contract(
+      this.ballotContractAddress,
+      ballotJson.abi,
+      this.provider
+    );
+  };
 
   clearBlock() {
     this.blockNumber = 0;
-  }
+  };
 
   createWallet() {
     this.userWallet = Wallet.createRandom().connect(this.provider);
     this.userWallet.getBalance().then((balanceBN) => {
       const balanceStr = utils.formatEther(balanceBN);
       this.userEthBalance = parseFloat(balanceStr);
+      this.userTokenBalance = 0;
     });
-  }
+  };
 
-  importWallet(pkey: string) {
-    this.userWallet = new Wallet(pkey, this.provider);
+  importWallet(privateKey: string) {
+    this.userWallet = new Wallet(privateKey, this.provider);
     this.userWallet.getBalance().then((balanceBN) => {
       const balanceStr = ethers.utils.formatEther(balanceBN);
       this.userEthBalance = parseFloat(balanceStr);
       this.importedWallet = true;
     });
+    if (!this.tokenContract) return;
+    this.tokenContract['balanceOf'](this.userWallet.address)
+      .then((tokenBalanceBN: BigNumber) => {
+        const tokenBalanceStr = utils.formatEther(tokenBalanceBN);
+        this.userTokenBalance = parseFloat(tokenBalanceStr);
+      });
   };
-    
+  
   requestTokens(amount: string) {
     const amountNum = parseInt(amount);
     this.http.post<{ balance: number }>(
@@ -97,5 +128,21 @@ export class AppComponent {
     ).subscribe((response) => {
       this.userTokenBalance = response.balance;
     });
+  };
+
+  castVote(proposal: string, votes: string) {
+    const proposalNum = parseInt(proposal);
+    const votesNum = parseInt(votes);
+    if (!this.userWallet || !this.ballotContract) return;
+    this.ballotContract
+      .connect(this.userWallet)["vote"](proposalNum, votesNum)
+      .then(() => {});
+  };
+
+  getWinningProposal() {
+    this.http.get<{ winner: string }>(WINNING_PROPOSAL_URL)
+      .subscribe((response) => {
+        this.winningProposal = response.winner;
+      });
   };
 }
