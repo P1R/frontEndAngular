@@ -11,7 +11,7 @@
       </button>
       <div>
         <p>Private Key:</p>
-        <input #privateKey type="string" class="input">
+        <input #pKey type="string" class="input">
       </div>
       <div class="card mt-4 mx-auto" *ngIf="userWallet && importedWallet == true">
         <div class="card-body">
@@ -100,7 +100,6 @@
           <input #mintAmount  type="number" min="1" max="100" class="input">
         </div>
       </div> 
-
       <div class="card mt-4 mx-auto" *ngIf="tokenContractAddress">
         <div class="card-body">
           <h5 class="card-title">Token Contract</h5>
@@ -130,6 +129,5 @@
         <input #delegatee type="text" class="input">
         <p>Voting Power:{{ votingPower }} </p>
       </div>
-    </div>
   </div>
 </div>

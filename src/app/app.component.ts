@@ -5,10 +5,10 @@ import { HttpClient } from '@angular/common/http';
 import tokenJson from '../assets/MyToken.json';
 import ballotJson from '../assets/Ballot.json';
 
-const API_URL = `http://${env.api}/contract-address`;
-const API_URL_MINT = `http://${env.api}/request-tokens`;
-const DEPLOY_BALLOT_URL = `http://${env.api}/deploy-ballot`;
-const WINNING_PROPOSAL_URL = `http://${env.api}/winning-proposal`;
+const API_URL = `http://10.162.235.88:3000/contract-address`;
+const API_URL_MINT = `http://10.162.235.88:3000/request-tokens`;
+const DEPLOY_BALLOT_URL = `http://10.162.235.88:3000/deploy-ballot`;
+const WINNING_PROPOSAL_URL = `http://10.162.235.88:3000/winning-proposal`;
 const PROPOSALS = ["Bulbasaur", "Charmander", "Squirtle", "pikachu"];
 
 @Component({
@@ -44,7 +44,7 @@ export class AppComponent {
   };
 
   getContractAddress() {
-    return this.http.get<{ address: string }>(CONTRACT_ADDRESS_URL);
+    return this.http.get<{ address: string }>(API_URL);
   };
 
   syncBlock() {
@@ -116,7 +116,7 @@ export class AppComponent {
     if (!this.tokenContract) return;
     this.tokenContract['balanceOf'](this.userWallet.address)
       .then((tokenBalanceBN: BigNumber) => {
-        const tokenBalanceStr = utils.formatEther(tokenBalanceBN);
+        const tokenBalanceStr = ethers.utils.formatEther(tokenBalanceBN);
         this.userTokenBalance = parseFloat(tokenBalanceStr);
       });
   };
