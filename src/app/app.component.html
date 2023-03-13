@@ -3,17 +3,17 @@
   <div class="col-lg-6 mx-auto">
     <div class="mt-4" *ngIf="blockNumber && blockNumber > 0">
       <p class="lead mb-4">We are connected to the Goerli Blockchain at the block <strong> {{blockNumber}}</strong></p>
-      <button type="button" class="btn btn-success btn-lg px-4 gap-3 my-4 mx-2" (click)="createWallet()">
+      <button type="button"  class="btn btn-success btn-lg px-4 gap-3 my-4 mx-2" (click)="createWallet()">
         {{userWallet ? "Create another" : "Create"}} Wallet
       </button>
-      <button #importButton type="button"  class="btn btn-danger btn-lg px-4 gap-3 my-4 mx-2" (click)="importWallet(privateKey.value)">
-        {{userWallet ? "Import another" : "Import a"}} Wallet
+      <button type="button"  class="btn btn-danger btn-lg px-4 gap-3 my-4 mx-2" (click)="importWallet(pKey.value)">
+        {{userWallet ? "import another" : "import a"}} Wallet
       </button>
       <div>
         <p>Private Key:</p>
         <input #privateKey type="string" class="input">
       </div>
-      <div class="card mt-4 mx-auto" *ngIf="userWallet">
+      <div class="card mt-4 mx-auto" *ngIf="userWallet && importedWallet == true">
         <div class="card-body">
           <h5 class="card-title">User Wallet</h5>
           <h6 class="card-subtitle mb-2 text-muted"> Address: 
@@ -21,33 +21,17 @@
               target="_blank">{{ userWallet.address }}</a> 
           </h6>
           <p class="card-text"> Balance: {{ userEthBalance }} ETH </p>
-          <p class="card-text">
-            Balance: {{ userTokenBalance }} MTK
-          </p>
-          <button
+          <p class="card-text"> Balance: {{ userTokenBalance }} MTK </p>
+          <button 
             type="button"
-            class="btn btn-danger btn-lg px-4 gap-3 my-4"
-            (click)="requestTokens(mintAmount.value)"
-          >
+            class="btn btn-danger btn-lg px-4 gap-3 my-4 mx-2"
+            (click)="requestTokens(mintAmount.value)">
             Request Tokens
           </button>
           <p>Amount:</p>
-          <input #mintAmount type="number" min="0" max="10" value="0" class="input">
+          <input #mintAmount  type="number" min="1" max="100" class="input">
         </div>
-      </div>
-      <div class="card mt-4 mx-auto" *ngIf="userWallet">
-        <div class="card-body">
-          <h5 class="card-title">Delegate</h5>
-          <button
-            type="button"
-            class="btn btn-primary btn-lg px-4 gap-3 my-4 mt-4"
-            (click)="delegate(delegatee.value)"
-          >
-            Delegate
-          </button>
-          <p>Address:</p>
-          <input #delegatee type="text" class="input">
-        </div>
+
       </div>
       <div class="card mt-4 mx-auto" *ngIf="userWallet">
         <div class="card-body">
@@ -94,6 +78,29 @@
           <p class="card-text"> {{ winningProposal }} </p>
         </div>
       </div>
+
+      </div> 
+      <div class="card mt-4 mx-auto" *ngIf="userWallet && importedWallet == false">
+        <div class="card-body">
+          <h5 class="card-title">User Wallet</h5>
+          <h6 class="card-subtitle mb-2 text-muted"> Address: 
+            <a href="https://mumbai.polygonscan.com/address//{{ userWallet.address }}"
+              target="_blank">{{ userWallet.address }}</a> 
+          </h6>
+          <p class="card-text"> pkey: {{ userWallet.privateKey }} </p>
+          <p class="card-text"> Balance: {{ userEthBalance }} ETH </p>
+          <p class="card-text"> Balance: {{ userTokenBalance }} MTK </p>
+          <button 
+            type="button"
+            class="btn btn-danger btn-lg px-4 gap-3 my-4 mx-2"
+            (click)="requestTokens(mintAmount.value)">
+            Request Tokens
+          </button>
+          <p>Amount:</p>
+          <input #mintAmount  type="number" min="1" max="100" class="input">
+        </div>
+      </div> 
+
       <div class="card mt-4 mx-auto" *ngIf="tokenContractAddress">
         <div class="card-body">
           <h5 class="card-title">Token Contract</h5>
@@ -108,6 +115,21 @@
     <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4">
     <button type="button" class="btn btn-primary btn-lg px-4 gap-3" (click)="syncBlock()">Sync</button>
     <button type="button" class="btn btn-outline-secondary btn-lg px-4" (click)="clearBlock()">Clear</button>
+    </div>
+    <div class="card mt-4 mx-auto" *ngIf="userWallet">
+      <div class="card-body">
+        <h5 class="card-title">Delegate</h5>
+        <button
+          type="button"
+          class="btn btn-primary btn-lg px-4 gap-3 my-4 mt-4"
+          (click)="delegate(delegatee.value)"
+        >
+          Delegate
+        </button>
+        <p>Address:</p>
+        <input #delegatee type="text" class="input">
+        <p>Voting Power:{{ votingPower }} </p>
+      </div>
     </div>
   </div>
 </div>

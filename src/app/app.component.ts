@@ -1,12 +1,12 @@
 import { Component } from '@angular/core';
-import { ethers, Wallet, utils, Contract, BigNumber } from 'ethers';
-import { env } from '../environment/env';
+import { Wallet, ethers, Contract, BigNumber, Transaction } from 'ethers';
+import { env } from '../enviorment/env';
 import { HttpClient } from '@angular/common/http'; 
 import tokenJson from '../assets/MyToken.json';
 import ballotJson from '../assets/Ballot.json';
 
-const CONTRACT_ADDRESS_URL = `http://${env.api}/contract-address`;
-const MINT_TOKENS_URL = `http://${env.api}/request-tokens`;
+const API_URL = `http://${env.api}/contract-address`;
+const API_URL_MINT = `http://${env.api}/request-tokens`;
 const DEPLOY_BALLOT_URL = `http://${env.api}/deploy-ballot`;
 const WINNING_PROPOSAL_URL = `http://${env.api}/winning-proposal`;
 const PROPOSALS = ["Bulbasaur", "Charmander", "Squirtle", "pikachu"];
@@ -18,23 +18,26 @@ const PROPOSALS = ["Bulbasaur", "Charmander", "Squirtle", "pikachu"];
 })
 export class AppComponent {
   blockNumber: number | string | undefined;
-  provider: ethers.providers.AlchemyProvider;
+  provider: ethers.providers.InfuraProvider;
   userWallet: Wallet | undefined;
   userEthBalance: number | undefined;
   importedWallet: boolean;
-  userTokenBalance: number | undefined;
-  tokenContractAddress: string | undefined;
+  userTokenBalance: number | undefined; 
+  tokenContractAddress: string | undefined; 
   tokenContract: Contract | undefined;
   tokenTotalSupply: number | string | undefined;
   ballotContractAddress: string | undefined;
   ballotContract: Contract | undefined;
   winningProposal: string | undefined;
+  latestTransaction: Transaction | undefined;
+  votingPower: number | undefined;
 
   constructor(private http: HttpClient) {
-    this.provider = new ethers.providers.AlchemyProvider(
-      env.network,
-      env.key
-    );
+    //this.provider = ethers.getDefaultProvider('goerli');
+    this.provider = new ethers.providers.InfuraProvider(
+    "maticmum",
+    env.INFURA_API_KEY
+     );
 
     // create logic to verify if is or not an imported 
     this.importedWallet = false;
@@ -65,7 +68,7 @@ export class AppComponent {
     );
     this.tokenTotalSupply = 'loading...';
     this.tokenContract['totalSupply']().then((totalSupplyBN: BigNumber) => {
-      const totalSupplyStr = utils.formatEther(totalSupplyBN);
+      const totalSupplyStr = ethers.utils.formatEther(totalSupplyBN);
       this.tokenTotalSupply = parseFloat(totalSupplyStr);
     });
   };
@@ -83,21 +86,32 @@ export class AppComponent {
     this.blockNumber = 0;
   };
 
-  createWallet() {
+  createWallet(){
     this.userWallet = Wallet.createRandom().connect(this.provider);
+    let balanceStr: string;
     this.userWallet.getBalance().then((balanceBN) => {
-      const balanceStr = utils.formatEther(balanceBN);
+      balanceStr = ethers.utils.formatEther(balanceBN);
       this.userEthBalance = parseFloat(balanceStr);
-      this.userTokenBalance = 0;
+    })
+    if(!this.tokenContract) return;
+    this.tokenContract['balanceOf'](this.userWallet.address).then((mtkBalanceBN: BigNumber) => {
+      balanceStr = ethers.utils.formatEther(mtkBalanceBN);
+      this.tokenTotalSupply = parseFloat(balanceStr);
     });
   };
 
-  importWallet(privateKey: string) {
-    this.userWallet = new Wallet(privateKey, this.provider);
+  importWallet(pkey: string){
+    this.userWallet = new Wallet(pkey, this.provider);
+    let balanceStr: string;
     this.userWallet.getBalance().then((balanceBN) => {
-      const balanceStr = ethers.utils.formatEther(balanceBN);
+      balanceStr = ethers.utils.formatEther(balanceBN);
       this.userEthBalance = parseFloat(balanceStr);
-      this.importedWallet = true;
+    this.importedWallet = true;
+    }) 
+    if(!this.tokenContract) return;
+    this.tokenContract['balanceOf'](this.userWallet.address).then((mtkBalanceBN: BigNumber) => {
+      balanceStr = ethers.utils.formatEther(mtkBalanceBN);
+      this.tokenTotalSupply = parseFloat(balanceStr);
     });
     if (!this.tokenContract) return;
     this.tokenContract['balanceOf'](this.userWallet.address)
@@ -106,11 +120,27 @@ export class AppComponent {
         this.userTokenBalance = parseFloat(tokenBalanceStr);
       });
   };
-  
+
+  delegate(delegateAddress: string) {
+    if(!this.tokenContract) return;
+    this.tokenContract['delegate'](delegateAddress).then((delegateTx: Transaction ) => {
+      this.latestTransaction = delegateTx;
+    });
+  }
+
+  getVotingPower(){
+    if(!this.tokenContract) return; 
+    if(!this.userWallet) return; 
+    this.tokenContract['getVotes'](this.userWallet.address).then((getVotes: BigNumber ) => {
+      const getVotesStr = ethers.utils.formatEther(getVotes);
+      this.votingPower = parseFloat(getVotesStr);
+    });  
+  }
+
   requestTokens(amount: string) {
     const amountNum = parseInt(amount);
     this.http.post<{ balance: number }>(
-      MINT_TOKENS_URL,
+      API_URL_MINT,
       {
         address: this.userWallet?.address,
         amount: amountNum
@@ -122,11 +152,6 @@ export class AppComponent {
       this.userTokenBalance = response.balance;
     });
   };
-
-  delegate(address: string) {
-    if (!this.tokenContract || !this.userWallet) return;
-    this.tokenContract['delegate'](address);
-  }
 
   deployBallot() {
     this.http.post<{ address: string, blockNumber: number }>(
