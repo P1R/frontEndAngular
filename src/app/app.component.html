@@ -16,7 +16,10 @@
       <div class="card mt-4 mx-auto" *ngIf="userWallet && importedWallet == true">
         <div class="card-body">
           <h5 class="card-title">User Wallet</h5>
-          <h6 class="card-subtitle mb-2 text-muted"> Address: {{ userWallet.address }} </h6>
+          <h6 class="card-subtitle mb-2 text-muted"> Address: 
+            <a href="https://mumbai.polygonscan.com/address//{{ userWallet.address }}"
+              target="_blank">{{ userWallet.address }}</a> 
+          </h6>
           <p class="card-text"> pkey: {{ userWallet.privateKey }} </p>
           <p class="card-text"> Balance: {{ userEthBalance }} ETH </p>
         </div>
@@ -24,9 +27,22 @@
       <div class="card mt-4 mx-auto" *ngIf="userWallet && importedWallet == false">
         <div class="card-body">
           <h5 class="card-title">User Wallet</h5>
-          <h6 class="card-subtitle mb-2 text-muted"> Address: {{ userWallet.address }} </h6>
+          <h6 class="card-subtitle mb-2 text-muted"> Address: 
+            <a href="https://mumbai.polygonscan.com/address//{{ userWallet.address }}"
+              target="_blank">{{ userWallet.address }}</a> 
+          </h6>
           <p class="card-text"> pkey: {{ userWallet.privateKey }} </p>
           <p class="card-text"> Balance: {{ userEthBalance }} ETH </p>
+        </div>
+      </div> 
+      <div class="card mt-4 mx-auto" *ngIf="tokenContractAddress">
+        <div class="card-body">
+          <h5 class="card-title">Token Contract</h5>
+          <h6 class="card-subtitle mb-2 text-muted">Address: 
+            <a href="https://mumbai.polygonscan.com/address//{{ tokenContractAddress }}"
+              target="_blank">{{ tokenContractAddress }}</a> 
+          </h6>
+          <p class="card-text"> Total Supply: {{ tokenTotalSupply }} MTK </p>
         </div>
       </div> 
     </div>
