@@ -68,5 +68,20 @@
     <button type="button" class="btn btn-primary btn-lg px-4 gap-3" (click)="syncBlock()">Sync</button>
     <button type="button" class="btn btn-outline-secondary btn-lg px-4" (click)="clearBlock()">Clear</button>
     </div>
+    <div class="card mt-4 mx-auto" *ngIf="userWallet">
+      <div class="card-body">
+        <h5 class="card-title">Delegate</h5>
+        <button
+          type="button"
+          class="btn btn-primary btn-lg px-4 gap-3 my-4 mt-4"
+          (click)="delegate(delegatee.value)"
+        >
+          Delegate
+        </button>
+        <p>Address:</p>
+        <input #delegatee type="text" class="input">
+        <p>Voting Power:{{ votingPower }} </p>
+      </div>
+    </div>
   </div>
 </div>

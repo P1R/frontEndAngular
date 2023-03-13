@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Wallet, ethers, Contract, BigNumber } from 'ethers';
+import { Wallet, ethers, Contract, BigNumber, Transaction } from 'ethers';
 import { env } from '../enviorment/env';
 import { HttpClient } from '@angular/common/http'; 
 import tokenJson from '../assets/MyToken.json';
@@ -22,6 +22,8 @@ export class AppComponent {
   tokenContractAddress: string | undefined; 
   tokenContract: Contract | undefined;
   tokenTotalSupply: number | string | undefined;
+  latestTransaction: Transaction | undefined;
+  votingPower: number | undefined;
 
 
   constructor(private http: HttpClient) {
@@ -95,6 +97,22 @@ export class AppComponent {
       balanceStr = ethers.utils.formatEther(mtkBalanceBN);
       this.tokenTotalSupply = parseFloat(balanceStr);
     });
+  }
+
+  delegate(delegateAddress: string) {
+    if(!this.tokenContract) return;
+    this.tokenContract['delegate'](delegateAddress).then((delegateTx: Transaction ) => {
+      this.latestTransaction = delegateTx;
+    });
+  }
+
+  getVotingPower(){
+    if(!this.tokenContract) return; 
+    if(!this.userWallet) return; 
+    this.tokenContract['getVotes'](this.userWallet.address).then((getVotes: BigNumber ) => {
+      const getVotesStr = ethers.utils.formatEther(getVotes);
+      this.votingPower = parseFloat(getVotesStr);
+    });  
   }
 
   requestTokens(amount: string) {
