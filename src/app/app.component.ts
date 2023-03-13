@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
-import { ethers, Wallet, utils, Contract, BigNumber } from 'ethers';
-import { env } from '../environment/env';
+import { Wallet, ethers, Contract, BigNumber } from 'ethers';
+import { env } from '../enviorment/env';
 import { HttpClient } from '@angular/common/http'; 
 import tokenJson from '../assets/MyToken.json';
 
 const API_URL = 'http://10.162.235.88:3000/contract-address';
-const MINT_TOKENS_URL = "http://10.162.235.88:3000/request-tokens";
+const API_URL_MINT = 'http://10.162.235.88:3000/request-tokens';
 
 @Component({
   selector: 'app-root',
@@ -14,23 +14,26 @@ const MINT_TOKENS_URL = "http://10.162.235.88:3000/request-tokens";
 })
 export class AppComponent {
   blockNumber: number | string | undefined;
-  provider: ethers.providers.AlchemyProvider;
+  provider: ethers.providers.InfuraProvider;
   userWallet: Wallet | undefined;
   userEthBalance: number | undefined;
   importedWallet: boolean;
-  userTokenBalance: number | undefined;
-  tokenContractAddress: string | undefined;
+  userTokenBalance: number | undefined; 
+  tokenContractAddress: string | undefined; 
   tokenContract: Contract | undefined;
   tokenTotalSupply: number | string | undefined;
 
+
   constructor(private http: HttpClient) {
-    this.provider = new ethers.providers.AlchemyProvider(
-      env.network,
-      env.key
-    );
+    //this.provider = ethers.getDefaultProvider('goerli');
+    this.provider = new ethers.providers.InfuraProvider(
+    "maticmum",
+    env.INFURA_API_KEY
+     );
 
     // create logic to verify if is or not an imported 
     this.importedWallet = false;
+    //this.tokenContractAddress =
   }
 
   getTokenAddress(){
@@ -38,14 +41,14 @@ export class AppComponent {
   }
 
   syncBlock(){
-    this.blockNumber = "loading...";
+    this.blockNumber = "loading..."
     this.provider.getBlock('latest').then((block) => {
       this.blockNumber = block.number;
-    });
+    })
     this.getTokenAddress().subscribe((response) => {
       this.tokenContractAddress = response.address;
       this.updateTokenInfo();
-    });
+    })  
   }
 
   updateTokenInfo() {
@@ -57,36 +60,47 @@ export class AppComponent {
     );
     this.tokenTotalSupply = 'loading...';
     this.tokenContract['totalSupply']().then((totalSupplyBN: BigNumber) => {
-      const totalSupplyStr = utils.formatEther(totalSupplyBN);
+      const totalSupplyStr = ethers.utils.formatEther(totalSupplyBN);
       this.tokenTotalSupply = parseFloat(totalSupplyStr);
     });
-  }
-
+  } 
   clearBlock() {
     this.blockNumber = 0;
   }
 
-  createWallet() {
+  createWallet(){
     this.userWallet = Wallet.createRandom().connect(this.provider);
+    let balanceStr: string;
     this.userWallet.getBalance().then((balanceBN) => {
-      const balanceStr = utils.formatEther(balanceBN);
+      balanceStr = ethers.utils.formatEther(balanceBN);
       this.userEthBalance = parseFloat(balanceStr);
+    })
+    if(!this.tokenContract) return;
+    this.tokenContract['balanceOf'](this.userWallet.address).then((mtkBalanceBN: BigNumber) => {
+      balanceStr = ethers.utils.formatEther(mtkBalanceBN);
+      this.tokenTotalSupply = parseFloat(balanceStr);
     });
   }
 
-  importWallet(pkey: string) {
+  importWallet(pkey: string){
     this.userWallet = new Wallet(pkey, this.provider);
+    let balanceStr: string;
     this.userWallet.getBalance().then((balanceBN) => {
-      const balanceStr = ethers.utils.formatEther(balanceBN);
+      balanceStr = ethers.utils.formatEther(balanceBN);
       this.userEthBalance = parseFloat(balanceStr);
-      this.importedWallet = true;
+    this.importedWallet = true;
+    }) 
+    if(!this.tokenContract) return;
+    this.tokenContract['balanceOf'](this.userWallet.address).then((mtkBalanceBN: BigNumber) => {
+      balanceStr = ethers.utils.formatEther(mtkBalanceBN);
+      this.tokenTotalSupply = parseFloat(balanceStr);
     });
-  };
-    
+  }
+
   requestTokens(amount: string) {
     const amountNum = parseInt(amount);
     this.http.post<{ balance: number }>(
-      MINT_TOKENS_URL,
+      API_URL_MINT,
       {
         address: this.userWallet?.address,
         amount: amountNum
@@ -96,6 +110,6 @@ export class AppComponent {
       }
     ).subscribe((response) => {
       this.userTokenBalance = response.balance;
-    });
-  };
+    })
+  }
 }
