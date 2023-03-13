@@ -6,9 +6,10 @@ import tokenJson from '../assets/MyToken.json';
 import ballotJson from '../assets/Ballot.json';
 
 const CONTRACT_ADDRESS_URL = `http://${env.api}/contract-address`;
-const BALLOT_ADDRESS_URL = `http://${env.api}/ballot-address`;
 const MINT_TOKENS_URL = `http://${env.api}/request-tokens`;
+const DEPLOY_BALLOT_URL = `http://${env.api}/deploy-ballot`;
 const WINNING_PROPOSAL_URL = `http://${env.api}/winning-proposal`;
+const PROPOSALS = ["Bulbasaur", "Charmander", "Squirtle", "pikachu"];
 
 @Component({
   selector: 'app-root',
@@ -43,10 +44,6 @@ export class AppComponent {
     return this.http.get<{ address: string }>(CONTRACT_ADDRESS_URL);
   };
 
-  getBallotAddress() {
-    return this.http.get<{ address: string }>(BALLOT_ADDRESS_URL);
-  };
-
   syncBlock() {
     this.blockNumber = "loading...";
     this.winningProposal = "unknown";
@@ -55,10 +52,6 @@ export class AppComponent {
     });
     this.getContractAddress().subscribe((response) => {
       this.tokenContractAddress = response.address;
-      this.updateTokenInfo();
-    });
-    this.getBallotAddress().subscribe((response) => {
-      this.ballotContractAddress = response.address;
       this.updateTokenInfo();
     });
   };
@@ -130,13 +123,32 @@ export class AppComponent {
     });
   };
 
+  delegate(address: string) {
+    if (!this.tokenContract || !this.userWallet) return;
+    this.tokenContract['delegate'](address);
+  }
+
+  deployBallot() {
+    this.http.post<{ address: string, blockNumber: number }>(
+      DEPLOY_BALLOT_URL,
+      {
+        proposals: PROPOSALS
+      },
+      {
+        responseType: "json"
+      }
+    ).subscribe((response) => {
+      this.ballotContractAddress = response.address;
+      this.blockNumber = response.blockNumber;
+    });
+  }
+
   castVote(proposal: string, votes: string) {
     const proposalNum = parseInt(proposal);
     const votesNum = parseInt(votes);
     if (!this.userWallet || !this.ballotContract) return;
     this.ballotContract
-      .connect(this.userWallet)["vote"](proposalNum, votesNum)
-      .then(() => {});
+      .connect(this.userWallet)["vote"](proposalNum, votesNum);
   };
 
   getWinningProposal() {

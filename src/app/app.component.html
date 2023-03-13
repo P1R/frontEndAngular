@@ -20,7 +20,6 @@
             <a href="https://mumbai.polygonscan.com/address//{{ userWallet.address }}"
               target="_blank">{{ userWallet.address }}</a> 
           </h6>
-          <p class="card-text"> privateKey: {{ userWallet.privateKey }} </p>
           <p class="card-text"> Balance: {{ userEthBalance }} ETH </p>
           <p class="card-text">
             Balance: {{ userTokenBalance }} MTK
@@ -34,6 +33,36 @@
           </button>
           <p>Amount:</p>
           <input #mintAmount type="number" min="0" max="10" value="0" class="input">
+        </div>
+      </div>
+      <div class="card mt-4 mx-auto" *ngIf="userWallet">
+        <div class="card-body">
+          <h5 class="card-title">Delegate</h5>
+          <button
+            type="button"
+            class="btn btn-primary btn-lg px-4 gap-3 my-4 mt-4"
+            (click)="delegate(delegatee.value)"
+          >
+            Delegate
+          </button>
+          <p>Address:</p>
+          <input #delegatee type="text" class="input">
+        </div>
+      </div>
+      <div class="card mt-4 mx-auto" *ngIf="userWallet">
+        <div class="card-body">
+          <h5 class="card-title">Deploy Ballot</h5>
+          <button
+            type="button"
+            class="btn btn-primary btn-lg px(-4 gap-3 my-4 mt-4"
+            (click)="deployBallot()"
+          >
+            Deploy Ballot
+          </button>
+          <h6 class="card-subtitle mb-2 text-muted">Address: 
+            <a href="https://mumbai.polygonscan.com/address//{{ ballotContractAddress }}"
+              target="_blank">{{ ballotContractAddress }}</a> 
+          </h6>
         </div>
       </div>
       <div class="card mt-4 mx-auto" *ngIf="userWallet">
@@ -73,15 +102,6 @@
               target="_blank">{{ tokenContractAddress }}</a> 
           </h6>
           <p class="card-text"> Total Supply: {{ tokenTotalSupply }} MTK </p>
-        </div>
-      </div>
-      <div class="card mt-4 mx-auto" *ngIf="ballotContractAddress">
-        <div class="card-body">
-          <h5 class="card-title">Ballot Contract</h5>
-          <h6 class="card-subtitle mb-2 text-muted">Address: 
-            <a href="https://mumbai.polygonscan.com/address//{{ ballotContractAddress }}"
-              target="_blank">{{ ballotContractAddress }}</a> 
-          </h6>
         </div>
       </div>
     </div>
