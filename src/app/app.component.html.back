@@ -22,20 +22,17 @@
           </h6>
           <p class="card-text"> Balance: {{ userEthBalance }} ETH </p>
           <p class="card-text"> Balance: {{ userTokenBalance }} MTK </p>
-          <!---
+          <!--
           <button 
             type="button"
             class="btn btn-danger btn-lg px-4 gap-3 my-4 mx-2"
             (click)="requestTokens(mintAmount.value)">
             Request Tokens
           </button>
+          -->
           <p>Amount:</p>
           <input #mintAmount  type="number" min="1" max="100" class="input">
-          --->
         </div>
-
-      </div>
-
       </div> 
       <div class="card mt-4 mx-auto" *ngIf="userWallet && importedWallet == false">
         <div class="card-body">
@@ -47,31 +44,17 @@
           <p class="card-text"> pkey: {{ userWallet.privateKey }} </p>
           <p class="card-text"> Balance: {{ userEthBalance }} ETH </p>
           <p class="card-text"> Balance: {{ userTokenBalance }} MTK </p>
-          <!---
+          <!--
           <button 
             type="button"
             class="btn btn-danger btn-lg px-4 gap-3 my-4 mx-2"
             (click)="requestTokens(mintAmount.value)">
             Request Tokens
           </button>
+          -->
           <p>Amount:</p>
           <input #mintAmount  type="number" min="1" max="100" class="input">
-          --->
         </div>
       </div> 
-      <div class="card mt-4 mx-auto" *ngIf="tokenContractAddress">
-        <div class="card-body">
-          <h5 class="card-title">Token Contract</h5>
-          <h6 class="card-subtitle mb-2 text-muted">Address: 
-            <a href="https://mumbai.polygonscan.com/address//{{ tokenContractAddress }}"
-              target="_blank">{{ tokenContractAddress }}</a> 
-          </h6>
-          <p class="card-text"> Total Supply: {{ tokenTotalSupply }} MTK </p>
-        </div>
-      </div>
-    </div>
-    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4">
-    <button type="button" class="btn btn-primary btn-lg px-4 gap-3" (click)="syncBlock()">Sync</button>
-    <button type="button" class="btn btn-outline-secondary btn-lg px-4" (click)="clearBlock()">Clear</button>
-    </div>
+  </div>
 </div>
