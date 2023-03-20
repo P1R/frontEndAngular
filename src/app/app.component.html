@@ -22,16 +22,15 @@
           </h6>
           <p class="card-text"> Balance: {{ userEthBalance }} ETH </p>
           <p class="card-text"> Balance: {{ userTokenBalance }} LT0 </p>
-          <!---
           <button 
             type="button"
             class="btn btn-danger btn-lg px-4 gap-3 my-4 mx-2"
-            (click)="requestTokens(mintAmount.value)">
+            (click)="topUpTokens(mintAmount.value)">
             Request Tokens
           </button>
           <p>Amount:</p>
           <input #mintAmount  type="number" min="1" max="100" class="input">
-          --->
+          <p *ngIf="txHash"> Transaction: {{ txHash }} </p>
         </div>
 
       </div>

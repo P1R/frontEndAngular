@@ -4,6 +4,8 @@ import { env } from '../enviorment/env';
 import lotteryJson from '../assets/Lottery.json';
 import tokenJson from '../assets/LotteryToken.json';
 
+const TOKEN_RATIO = 1000;
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -21,6 +23,7 @@ export class AppComponent {
   tokenTotalSupply: number | string | undefined;
   lotteryContractAddress: string | undefined;
   lotteryContract: Contract | undefined;
+  txHash: string | undefined; 
 
   constructor() {
     //this.provider = ethers.getDefaultProvider('goerli');
@@ -155,66 +158,10 @@ export class AppComponent {
       });
   };
 
-
-  //delegate(delegateAddress: string) {
-  //  if(!this.tokenContract) return;
-  //  this.tokenContract['delegate'](delegateAddress).then((delegateTx: Transaction ) => {
-  //    this.latestTransaction = delegateTx;
-  //  });
-  //}
-
-  //getVotingPower(){
-  //  if(!this.tokenContract) return; 
-  //  if(!this.userWallet) return; 
-  //  this.tokenContract['getVotes'](this.userWallet.address).then((getVotes: BigNumber ) => {
-  //    const getVotesStr = ethers.utils.formatEther(getVotes);
-  //    this.votingPower = parseFloat(getVotesStr);
-  //  });  
-  //}
-
-  //requestTokens(amount: string) {
-  //  const amountNum = parseInt(amount);
-  //  this.http.post<{ balance: number }>(
-  //    API_URL_MINT,
-  //    {
-  //      address: this.userWallet?.address,
-  //      amount: amountNum
-  //    },
-  //    {
-  //      responseType: "json"
-  //    }
-  //  ).subscribe((response) => {
-  //    this.userTokenBalance = response.balance;
-  //  });
-  //};
-
-  //deployBallot() {
-  //  this.http.post<{ address: string, blockNumber: number }>(
-  //    DEPLOY_BALLOT_URL,
-  //    {
-  //      proposals: PROPOSALS
-  //    },
-  //    {
-  //      responseType: "json"
-  //    }
-  //  ).subscribe((response) => {
-  //    this.ballotContractAddress = response.address;
-  //    this.blockNumber = response.blockNumber;
-  //  });
-  //}
-
-  //castVote(proposal: string, votes: string) {
-  //  const proposalNum = parseInt(proposal);
-  //  const votesNum = parseInt(votes);
-  //  if (!this.userWallet || !this.ballotContract) return;
-  //  this.ballotContract
-  //    .connect(this.userWallet)["vote"](proposalNum, votesNum);
-  //};
-
-  //getWinningProposal() {
-  //  this.http.get<{ winner: string }>(WINNING_PROPOSAL_URL)
-  //    .subscribe((response) => {
-  //      this.winningProposal = response.winner;
-  //    });
-  //};
+  async topUpTokens(amount: string) {
+    if (!this.lotteryContract) return;
+    const tx = await this.lotteryContract["purchaseTokens"]({value: ethers.utils.parseEther(amount).div(TOKEN_RATIO),});
+    const receipt = await tx.wait();
+    this.txHash = receipt.transactionHash;
+  }
 }
