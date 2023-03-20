@@ -1,5 +1,5 @@
 <div class="px-4 py-5 my-5 text-center">
-  <h1 class="display-5 fw-bold">Hello!</h1>
+  <h1 class="display-5 fw-bold">Welcome to the Lottery DAPP!</h1>
   <div class="col-lg-6 mx-auto">
     <div class="mt-4" *ngIf="blockNumber && blockNumber > 0">
       <p class="lead mb-4">We are connected to the Goerli Blockchain at the block <strong> {{blockNumber}}</strong></p>
@@ -17,11 +17,11 @@
         <div class="card-body">
           <h5 class="card-title">User Wallet</h5>
           <h6 class="card-subtitle mb-2 text-muted"> Address: 
-            <a href="https://mumbai.polygonscan.com/address//{{ userWallet.address }}"
+            <a href="https://goerli.etherscan.io/address//{{ userWallet.address }}"
               target="_blank">{{ userWallet.address }}</a> 
           </h6>
           <p class="card-text"> Balance: {{ userEthBalance }} ETH </p>
-          <p class="card-text"> Balance: {{ userTokenBalance }} MTK </p>
+          <p class="card-text"> Balance: {{ userTokenBalance }} LT0 </p>
           <!---
           <button 
             type="button"
@@ -41,37 +41,33 @@
         <div class="card-body">
           <h5 class="card-title">User Wallet</h5>
           <h6 class="card-subtitle mb-2 text-muted"> Address: 
-            <a href="https://mumbai.polygonscan.com/address//{{ userWallet.address }}"
+            <a href="https://goerli.etherscan.io/address//{{ userWallet.address }}"
               target="_blank">{{ userWallet.address }}</a> 
           </h6>
-          <p class="card-text"> pkey: {{ userWallet.privateKey }} </p>
+          <p class="card-text"> PRIVATE KEY: {{ userWallet.privateKey }} </p>
           <p class="card-text"> Balance: {{ userEthBalance }} ETH </p>
-          <p class="card-text"> Balance: {{ userTokenBalance }} MTK </p>
-          <!---
-          <button 
-            type="button"
-            class="btn btn-danger btn-lg px-4 gap-3 my-4 mx-2"
-            (click)="requestTokens(mintAmount.value)">
-            Request Tokens
-          </button>
-          <p>Amount:</p>
-          <input #mintAmount  type="number" min="1" max="100" class="input">
-          --->
+          <p class="card-text"> Balance: {{ userTokenBalance }} LT0 </p>
         </div>
       </div> 
-      <div class="card mt-4 mx-auto" *ngIf="tokenContractAddress">
+      <div  *ngIf="userWallet && importedWallet == false" class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">IMPORTANT!</h4>
+        <p>STORE THE PRIVATE KEY IN A SAFE PLACE.</p>
+        <hr>
+        <p class="mb-0">Once you store it, you might want to get some ether and import it from the main site</p>
+      </div>
+
+      <div class="card mt-4 mx-auto" *ngIf="importedWallet && tokenContractAddress != undefined">
         <div class="card-body">
           <h5 class="card-title">Token Contract</h5>
           <h6 class="card-subtitle mb-2 text-muted">Address: 
-            <a href="https://mumbai.polygonscan.com/address//{{ tokenContractAddress }}"
-              target="_blank">{{ tokenContractAddress }}</a> 
+            <a href="https://goerli.etherscan.io/address/{{ tokenContractAddress }}" target="_blank">{{ tokenContractAddress }}</a> 
           </h6>
-          <p class="card-text"> Total Supply: {{ tokenTotalSupply }} MTK </p>
+          <p class="card-text"> Total Supply: {{ tokenTotalSupply }} LT0 </p>
         </div>
       </div>
     </div>
     <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4">
     <button type="button" class="btn btn-primary btn-lg px-4 gap-3" (click)="syncBlock()">Sync</button>
-    <button type="button" class="btn btn-outline-secondary btn-lg px-4" (click)="clearBlock()">Clear</button>
-    </div>
+    <button type="button" class="btn btn-outline-secondary btn-lg px-4" (click)="clearWallet()">Clear</button>
+  </div>
 </div>

@@ -33,27 +33,20 @@ export class AppComponent {
     this.importedWallet = false;
   };
 
-  //async getTokenContractAddress() {
-  //  if (!this.lotteryContract) return;
-  //  return await this.lotteryContract['paymentToken']();
-  //};
-
-  syncBlock() {
+  async syncBlock() {
+    // clean variables
+    this.clearWallet();
     this.blockNumber = "loading...";
-    //this.winningProposal = "unknown";
+    // test connection
     this.provider.getBlock('latest').then((block) => {
       this.blockNumber = block.number;
     });
     this.lotteryContractAddress = "0x2F0cF8a8ffAa5e406aD4f158891931292740aFEC"
     this.updateLotteryInfo();
-    if (!this.lotteryContract) return;
     //TODO
-    //this.getTokenContractAddress = this.lotteryContract['paymentToken']()
-    //this.updateTokenInfo();
-    //this.getTokenContractAddress().subscribe((response) => {
-    //  this.tokenContractAddress = response.address;
-    //  this.updateTokenInfo();
-    //});
+    if (!this.lotteryContract) return;
+    this.tokenContractAddress = await this.lotteryContract['paymentToken']()
+    this.updateTokenInfo();
   };
 
   updateTokenInfo() {
@@ -79,11 +72,23 @@ export class AppComponent {
     );
   };
 
-  clearBlock() {
+  clearWallet() {
+    // Cleans Variables
     this.blockNumber = 0;
+    this.userWallet = undefined;
+    this.userEthBalance = undefined;
+    this.importedWallet = false;
+    this.userTokenBalance = undefined; 
+    this.tokenContractAddress = undefined; 
+    this.tokenContract = undefined;
+    this.tokenTotalSupply = undefined;
+    this.lotteryContractAddress = undefined;
+    this.lotteryContract = undefined;
   };
 
   createWallet(){
+    // clean variables
+    this.clearWallet();
     this.userWallet = ethers.Wallet.createRandom().connect(this.provider);
     let balanceStr: string;
     this.userWallet.getBalance().then((balanceBN) => {
@@ -132,17 +137,16 @@ export class AppComponent {
       return;
     }
 
-    let balanceStr: string;
+    // Clean previous Balances display 
+    this.userEthBalance  = 0;
+    this.userTokenBalance = 0;
+    // Get the ETH balance from the imported Wallet
     this.userWallet.getBalance().then((balanceBN) => {
-      balanceStr = ethers.utils.formatEther(balanceBN);
+      const balanceStr = ethers.utils.formatEther(balanceBN);
       this.userEthBalance = parseFloat(balanceStr);
     this.importedWallet = true;
     }) 
-    if(!this.tokenContract) return;
-    this.tokenContract['balanceOf'](this.userWallet.address).then((mtkBalanceBN: BigNumber) => {
-      balanceStr = ethers.utils.formatEther(mtkBalanceBN);
-      this.tokenTotalSupply = parseFloat(balanceStr);
-    });
+    // Gets the userTokenBalance from the imported Wallet
     if (!this.tokenContract) return;
     this.tokenContract['balanceOf'](this.userWallet.address)
       .then((tokenBalanceBN: BigNumber) => {
