@@ -1,15 +1,10 @@
 import { Component } from '@angular/core';
-import { Wallet, ethers, Contract, BigNumber, Transaction } from 'ethers';
+import { ethers, Contract, BigNumber } from 'ethers';
 import { env } from '../enviorment/env';
-import { HttpClient } from '@angular/common/http'; 
-import tokenJson from '../assets/MyToken.json';
-import ballotJson from '../assets/Ballot.json';
+import lotteryJson from '../assets/Lottery.json';
+import tokenJson from '../assets/LotteryToken.json';
 
-const API_URL = `http://10.162.235.88:3000/contract-address`;
-const API_URL_MINT = `http://10.162.235.88:3000/request-tokens`;
-const DEPLOY_BALLOT_URL = `http://10.162.235.88:3000/deploy-ballot`;
-const WINNING_PROPOSAL_URL = `http://10.162.235.88:3000/winning-proposal`;
-const PROPOSALS = ["Bulbasaur", "Charmander", "Squirtle", "pikachu"];
+const TOKEN_RATIO = 1000;
 
 @Component({
   selector: 'app-root',
@@ -19,23 +14,25 @@ const PROPOSALS = ["Bulbasaur", "Charmander", "Squirtle", "pikachu"];
 export class AppComponent {
   blockNumber: number | string | undefined;
   provider: ethers.providers.InfuraProvider;
-  userWallet: Wallet | undefined;
-  userEthBalance: number | undefined;
+  userWallet: ethers.Wallet | undefined;
   importedWallet: boolean;
+  userEthBalance: number | undefined;
   userTokenBalance: number | undefined; 
   tokenContractAddress: string | undefined; 
   tokenContract: Contract | undefined;
   tokenTotalSupply: number | string | undefined;
-  ballotContractAddress: string | undefined;
-  ballotContract: Contract | undefined;
-  winningProposal: string | undefined;
-  latestTransaction: Transaction | undefined;
-  votingPower: number | undefined;
+  lotteryContractAddress: string | undefined;
+  lotteryContract: Contract | undefined;
+  lotteryEthBalance: number | undefined;
+  prizePool: number | undefined; 
+  ownerPool: number | undefined; 
+  betsState: String | undefined;
+  txHash: string | undefined; 
 
-  constructor(private http: HttpClient) {
+  constructor() {
     //this.provider = ethers.getDefaultProvider('goerli');
     this.provider = new ethers.providers.InfuraProvider(
-    "maticmum",
+    "goerli",
     env.INFURA_API_KEY
      );
 
@@ -43,24 +40,25 @@ export class AppComponent {
     this.importedWallet = false;
   };
 
-  getContractAddress() {
-    return this.http.get<{ address: string }>(API_URL);
-  };
-
-  syncBlock() {
+  async syncBlock() {
+    // clean variables
+    this.clearWallet();
     this.blockNumber = "loading...";
-    this.winningProposal = "unknown";
+    // test connection
     this.provider.getBlock('latest').then((block) => {
       this.blockNumber = block.number;
     });
-    this.getContractAddress().subscribe((response) => {
-      this.tokenContractAddress = response.address;
-      this.updateTokenInfo();
-    });
+    this.lotteryContractAddress = "0x2F0cF8a8ffAa5e406aD4f158891931292740aFEC"
+    this.updateLotteryInfo();
+    //TODO
+    if (!this.lotteryContract) return;
+    this.tokenContractAddress = await this.lotteryContract['paymentToken']()
+    this.updateTokenInfo();
   };
 
   updateTokenInfo() {
     if (!this.tokenContractAddress) return;
+    // Clean previous Balances display 
     this.tokenContract = new Contract(
       this.tokenContractAddress,
       tokenJson.abi,
@@ -73,21 +71,61 @@ export class AppComponent {
     });
   };
 
-  updateBallotInfo() {
-    if (!this.ballotContractAddress) return;
-    this.ballotContract = new Contract(
-      this.ballotContractAddress,
-      ballotJson.abi,
+  updateLotteryInfo() {
+    let tokenBalanceStr;
+    if (!this.lotteryContractAddress) return;
+    this.lotteryContract = new Contract(
+      this.lotteryContractAddress,
+      lotteryJson.abi,
       this.provider
     );
+    // ToDo Fix Issue....
+    // Get the ETH balance from the Lottery Contract
+    //this.lotteryContract['getBalance']().then((balanceBN: BigNumber) => {
+    //  const balanceStr = ethers.utils.formatEther(balanceBN);
+    //  this.lotteryEthBalance = parseFloat(balanceStr);
+    //this.importedWallet = true;
+    //}) 
+    // Gets the userTokenBalance from the imported Wallet
+    this.lotteryContract['prizePool']()
+      .then((tokenBalanceBN: BigNumber) => {
+        tokenBalanceStr = ethers.utils.formatEther(tokenBalanceBN);
+        this.prizePool = parseFloat(tokenBalanceStr);
+      });
+    this.lotteryContract['ownerPool']()
+      .then((tokenBalanceBN: BigNumber) => {
+        tokenBalanceStr = ethers.utils.formatEther(tokenBalanceBN);
+        this.ownerPool = parseFloat(tokenBalanceStr);
+      });
+    this.lotteryContract['betsOpen']()
+      .then((betsOpen: boolean) => {
+        if (betsOpen){
+        this.betsState = "open";
+        }
+        else{
+        this.betsState = "closed";
+        }
+      });
   };
 
-  clearBlock() {
+  clearWallet() {
+    // Cleans Variables
     this.blockNumber = 0;
+    this.userWallet = undefined;
+    this.userEthBalance = undefined;
+    this.importedWallet = false;
+    this.userTokenBalance = undefined; 
+    this.tokenContractAddress = undefined; 
+    this.tokenContract = undefined;
+    this.tokenTotalSupply = undefined;
+    this.lotteryContractAddress = undefined;
+    this.lotteryContract = undefined;
   };
 
   createWallet(){
-    this.userWallet = Wallet.createRandom().connect(this.provider);
+    // clean variables
+    this.clearWallet();
+    this.userWallet = ethers.Wallet.createRandom().connect(this.provider);
     let balanceStr: string;
     this.userWallet.getBalance().then((balanceBN) => {
       balanceStr = ethers.utils.formatEther(balanceBN);
@@ -100,19 +138,51 @@ export class AppComponent {
     });
   };
 
+  isEthereumKey(text: string): boolean | null {
+    // Regular expression for detecting Ethereum private keys
+    const keyRegex: RegExp = /^(0x)?[0-9a-fA-F]{64}$/;
+    // Regular expression for detecting Ethereum mnemonics
+    const mnemonicRegex: RegExp = /^(?:\w+\s){11}\w+$/;
+
+    // Check if the text string matches the Ethereum private key regular expression
+    if (keyRegex.test(text)) {
+      return true;
+    }
+    // Check if the text string matches the Ethereum mnemonic regular expression
+    else if (mnemonicRegex.test(text)) {
+      return false;
+    }
+    // If the text string doesn't match either regular expression, return null
+    else {
+      return null;
+    }
+  };
+
   importWallet(pkey: string){
-    this.userWallet = new Wallet(pkey, this.provider);
-    let balanceStr: string;
+    const isPrivateKey: boolean | null = this.isEthereumKey(pkey);
+    
+    if (isPrivateKey === true) { 
+      // for a private key
+      this.userWallet = new ethers.Wallet(`${pkey}`, this.provider);
+    } else if (isPrivateKey === false) {
+      // for mnemonic key
+      this.userWallet = ethers.Wallet.fromMnemonic(pkey);
+    
+    } else {
+      throw new Error('The input string is not an Ethereum private key or mnemonic phrase.'); 
+      return;
+    }
+
+    // Clean previous Balances display 
+    this.userEthBalance  = 0;
+    this.userTokenBalance = 0;
+    // Get the ETH balance from the imported Wallet
     this.userWallet.getBalance().then((balanceBN) => {
-      balanceStr = ethers.utils.formatEther(balanceBN);
+      const balanceStr = ethers.utils.formatEther(balanceBN);
       this.userEthBalance = parseFloat(balanceStr);
     this.importedWallet = true;
     }) 
-    if(!this.tokenContract) return;
-    this.tokenContract['balanceOf'](this.userWallet.address).then((mtkBalanceBN: BigNumber) => {
-      balanceStr = ethers.utils.formatEther(mtkBalanceBN);
-      this.tokenTotalSupply = parseFloat(balanceStr);
-    });
+    // Gets the userTokenBalance from the imported Wallet
     if (!this.tokenContract) return;
     this.tokenContract['balanceOf'](this.userWallet.address)
       .then((tokenBalanceBN: BigNumber) => {
@@ -121,65 +191,10 @@ export class AppComponent {
       });
   };
 
-  delegate(delegateAddress: string) {
-    if(!this.tokenContract) return;
-    this.tokenContract['delegate'](delegateAddress).then((delegateTx: Transaction ) => {
-      this.latestTransaction = delegateTx;
-    });
+  async topUpTokens(amount: string) {
+    if (!this.lotteryContract) return;
+    const tx = await this.lotteryContract["purchaseTokens"]([,{value: ethers.utils.parseEther(amount).div(TOKEN_RATIO)}]);
+    const receipt = await tx.wait();
+    this.txHash = receipt.transactionHash;
   }
-
-  getVotingPower(){
-    if(!this.tokenContract) return; 
-    if(!this.userWallet) return; 
-    this.tokenContract['getVotes'](this.userWallet.address).then((getVotes: BigNumber ) => {
-      const getVotesStr = ethers.utils.formatEther(getVotes);
-      this.votingPower = parseFloat(getVotesStr);
-    });  
-  }
-
-  requestTokens(amount: string) {
-    const amountNum = parseInt(amount);
-    this.http.post<{ balance: number }>(
-      API_URL_MINT,
-      {
-        address: this.userWallet?.address,
-        amount: amountNum
-      },
-      {
-        responseType: "json"
-      }
-    ).subscribe((response) => {
-      this.userTokenBalance = response.balance;
-    });
-  };
-
-  deployBallot() {
-    this.http.post<{ address: string, blockNumber: number }>(
-      DEPLOY_BALLOT_URL,
-      {
-        proposals: PROPOSALS
-      },
-      {
-        responseType: "json"
-      }
-    ).subscribe((response) => {
-      this.ballotContractAddress = response.address;
-      this.blockNumber = response.blockNumber;
-    });
-  }
-
-  castVote(proposal: string, votes: string) {
-    const proposalNum = parseInt(proposal);
-    const votesNum = parseInt(votes);
-    if (!this.userWallet || !this.ballotContract) return;
-    this.ballotContract
-      .connect(this.userWallet)["vote"](proposalNum, votesNum);
-  };
-
-  getWinningProposal() {
-    this.http.get<{ winner: string }>(WINNING_PROPOSAL_URL)
-      .subscribe((response) => {
-        this.winningProposal = response.winner;
-      });
-  };
 }
