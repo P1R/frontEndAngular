@@ -57,13 +57,27 @@
 
       <div class="card mt-4 mx-auto" *ngIf="importedWallet && tokenContractAddress != undefined">
         <div class="card-body">
-          <h5 class="card-title">Token Contract</h5>
-          <h6 class="card-subtitle mb-2 text-muted">Address: 
+          <h5 class="card-title">Contracts Info</h5>
+          <h6 class="card-subtitle mb-2 text-muted"> Token Address: 
             <a href="https://goerli.etherscan.io/address/{{ tokenContractAddress }}" target="_blank">{{ tokenContractAddress }}</a> 
           </h6>
           <p class="card-text"> Total Supply: {{ tokenTotalSupply }} LT0 </p>
+          <h6 class="card-subtitle mb-2 text-muted"> Lottery Address: 
+            <a href="https://goerli.etherscan.io/address/{{ lotteryContractAddress }}" target="_blank">{{ lotteryContractAddress }}</a> 
+          </h6>
+          <p class="card-text"> Balance of Lottery: {{ lotteryEthBalance }} ETH </p>
+          <p class="card-text"> prizePool: {{ prizePool }} LT0 </p>
+          <p class="card-text"> ownerPool: {{ ownerPool }} LT0 </p>
         </div>
       </div>
+
+      <div class="card mt-4 mx-auto" *ngIf="importedWallet && tokenContractAddress != undefined">
+        <div class="card-body">
+          <h5 class="card-title">Lottery States</h5>
+          <p class="card-text"> The lottery is {{ betsState }} ! </p>
+        </div>
+      </div>
+
     </div>
     <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4">
     <button type="button" class="btn btn-primary btn-lg px-4 gap-3" (click)="syncBlock()">Sync</button>

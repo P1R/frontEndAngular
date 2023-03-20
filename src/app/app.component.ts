@@ -15,14 +15,18 @@ export class AppComponent {
   blockNumber: number | string | undefined;
   provider: ethers.providers.InfuraProvider;
   userWallet: ethers.Wallet | undefined;
-  userEthBalance: number | undefined;
   importedWallet: boolean;
+  userEthBalance: number | undefined;
   userTokenBalance: number | undefined; 
   tokenContractAddress: string | undefined; 
   tokenContract: Contract | undefined;
   tokenTotalSupply: number | string | undefined;
   lotteryContractAddress: string | undefined;
   lotteryContract: Contract | undefined;
+  lotteryEthBalance: number | undefined;
+  prizePool: number | undefined; 
+  ownerPool: number | undefined; 
+  betsState: String | undefined;
   txHash: string | undefined; 
 
   constructor() {
@@ -54,6 +58,7 @@ export class AppComponent {
 
   updateTokenInfo() {
     if (!this.tokenContractAddress) return;
+    // Clean previous Balances display 
     this.tokenContract = new Contract(
       this.tokenContractAddress,
       tokenJson.abi,
@@ -67,12 +72,40 @@ export class AppComponent {
   };
 
   updateLotteryInfo() {
+    let tokenBalanceStr;
     if (!this.lotteryContractAddress) return;
     this.lotteryContract = new Contract(
       this.lotteryContractAddress,
       lotteryJson.abi,
       this.provider
     );
+    // ToDo Fix Issue....
+    // Get the ETH balance from the Lottery Contract
+    //this.lotteryContract['getBalance']().then((balanceBN: BigNumber) => {
+    //  const balanceStr = ethers.utils.formatEther(balanceBN);
+    //  this.lotteryEthBalance = parseFloat(balanceStr);
+    //this.importedWallet = true;
+    //}) 
+    // Gets the userTokenBalance from the imported Wallet
+    this.lotteryContract['prizePool']()
+      .then((tokenBalanceBN: BigNumber) => {
+        tokenBalanceStr = ethers.utils.formatEther(tokenBalanceBN);
+        this.prizePool = parseFloat(tokenBalanceStr);
+      });
+    this.lotteryContract['ownerPool']()
+      .then((tokenBalanceBN: BigNumber) => {
+        tokenBalanceStr = ethers.utils.formatEther(tokenBalanceBN);
+        this.ownerPool = parseFloat(tokenBalanceStr);
+      });
+    this.lotteryContract['betsOpen']()
+      .then((betsOpen: boolean) => {
+        if (betsOpen){
+        this.betsState = "open";
+        }
+        else{
+        this.betsState = "closed";
+        }
+      });
   };
 
   clearWallet() {
@@ -160,7 +193,7 @@ export class AppComponent {
 
   async topUpTokens(amount: string) {
     if (!this.lotteryContract) return;
-    const tx = await this.lotteryContract["purchaseTokens"]({value: ethers.utils.parseEther(amount).div(TOKEN_RATIO),});
+    const tx = await this.lotteryContract["purchaseTokens"]([,{value: ethers.utils.parseEther(amount).div(TOKEN_RATIO)}]);
     const receipt = await tx.wait();
     this.txHash = receipt.transactionHash;
   }
