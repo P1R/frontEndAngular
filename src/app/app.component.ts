@@ -1,15 +1,8 @@
 import { Component } from '@angular/core';
-import { Wallet, ethers, Contract, BigNumber, Transaction } from 'ethers';
+import { ethers, Contract, BigNumber } from 'ethers';
 import { env } from '../enviorment/env';
-import { HttpClient } from '@angular/common/http'; 
 import lotteryJson from '../assets/Lottery.json';
 import tokenJson from '../assets/LotteryToken.json';
-
-//const API_URL = `http://10.162.235.88:3000/contract-address`;
-//const API_URL_MINT = `http://10.162.235.88:3000/request-tokens`;
-//const DEPLOY_BALLOT_URL = `http://10.162.235.88:3000/deploy-ballot`;
-//const WINNING_PROPOSAL_URL = `http://10.162.235.88:3000/winning-proposal`;
-//const PROPOSALS = ["Bulbasaur", "Charmander", "Squirtle", "pikachu"];
 
 @Component({
   selector: 'app-root',
@@ -19,7 +12,7 @@ import tokenJson from '../assets/LotteryToken.json';
 export class AppComponent {
   blockNumber: number | string | undefined;
   provider: ethers.providers.InfuraProvider;
-  userWallet: Wallet | undefined;
+  userWallet: ethers.Wallet | undefined;
   userEthBalance: number | undefined;
   importedWallet: boolean;
   userTokenBalance: number | undefined; 
@@ -28,11 +21,8 @@ export class AppComponent {
   tokenTotalSupply: number | string | undefined;
   lotteryContractAddress: string | undefined;
   lotteryContract: Contract | undefined;
-  //winningProposal: string | undefined;
-  //latestTransaction: Transaction | undefined;
-  //votingPower: number | undefined;
 
-  constructor(private http: HttpClient) {
+  constructor() {
     //this.provider = ethers.getDefaultProvider('goerli');
     this.provider = new ethers.providers.InfuraProvider(
     "goerli",
@@ -94,7 +84,7 @@ export class AppComponent {
   };
 
   createWallet(){
-    this.userWallet = Wallet.createRandom().connect(this.provider);
+    this.userWallet = ethers.Wallet.createRandom().connect(this.provider);
     let balanceStr: string;
     this.userWallet.getBalance().then((balanceBN) => {
       balanceStr = ethers.utils.formatEther(balanceBN);
@@ -107,8 +97,41 @@ export class AppComponent {
     });
   };
 
+  isEthereumKey(text: string): boolean | null {
+    // Regular expression for detecting Ethereum private keys
+    const keyRegex: RegExp = /^(0x)?[0-9a-fA-F]{64}$/;
+    // Regular expression for detecting Ethereum mnemonics
+    const mnemonicRegex: RegExp = /^(?:\w+\s){11}\w+$/;
+
+    // Check if the text string matches the Ethereum private key regular expression
+    if (keyRegex.test(text)) {
+      return true;
+    }
+    // Check if the text string matches the Ethereum mnemonic regular expression
+    else if (mnemonicRegex.test(text)) {
+      return false;
+    }
+    // If the text string doesn't match either regular expression, return null
+    else {
+      return null;
+    }
+  };
+
   importWallet(pkey: string){
-    this.userWallet = new Wallet(pkey, this.provider);
+    const isPrivateKey: boolean | null = this.isEthereumKey(pkey);
+    
+    if (isPrivateKey === true) { 
+      // for a private key
+      this.userWallet = new ethers.Wallet(`${pkey}`, this.provider);
+    } else if (isPrivateKey === false) {
+      // for mnemonic key
+      this.userWallet = ethers.Wallet.fromMnemonic(pkey);
+    
+    } else {
+      throw new Error('The input string is not an Ethereum private key or mnemonic phrase.'); 
+      return;
+    }
+
     let balanceStr: string;
     this.userWallet.getBalance().then((balanceBN) => {
       balanceStr = ethers.utils.formatEther(balanceBN);
@@ -127,6 +150,7 @@ export class AppComponent {
         this.userTokenBalance = parseFloat(tokenBalanceStr);
       });
   };
+
 
   //delegate(delegateAddress: string) {
   //  if(!this.tokenContract) return;
