@@ -191,9 +191,11 @@ export class AppComponent {
       });
   };
 
-  async topUpTokens(amount: string) {
+  async topUpTokens(amount: string)  {
     if (!this.lotteryContract) return;
-    const tx = await this.lotteryContract["purchaseTokens"]([,{value: ethers.utils.parseEther(amount).div(TOKEN_RATIO)}]);
+    const tx = await this.lotteryContract["purchaseTokens"]({
+      value: ethers.utils.parseEther(amount).div(TOKEN_RATIO)
+    });    
     const receipt = await tx.wait();
     this.txHash = receipt.transactionHash;
   }
