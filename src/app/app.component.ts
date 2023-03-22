@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { ethers, Contract, BigNumber } from 'ethers';
+import { ethers, Contract, BigNumber, Signer } from 'ethers';
 import { env } from '../enviorment/env';
 import lotteryJson from '../assets/Lottery.json';
 import tokenJson from '../assets/LotteryToken.json';
@@ -15,6 +15,7 @@ export class AppComponent {
   blockNumber: number | string | undefined;
   provider: ethers.providers.InfuraProvider;
   userWallet: ethers.Wallet | undefined;
+  signer: string | Signer | undefined;
   importedWallet: boolean;
   userEthBalance: number | undefined;
   userTokenBalance: number | undefined; 
@@ -38,6 +39,7 @@ export class AppComponent {
 
     // create logic to verify if is or not an imported 
     this.importedWallet = false;
+    this.signer = "";
   };
 
   async syncBlock() {
@@ -164,10 +166,11 @@ export class AppComponent {
     if (isPrivateKey === true) { 
       // for a private key
       this.userWallet = new ethers.Wallet(`${pkey}`, this.provider);
+      this.signer =  this.userWallet.connect(this.provider);
     } else if (isPrivateKey === false) {
       // for mnemonic key
       this.userWallet = ethers.Wallet.fromMnemonic(pkey);
-    
+      this.signer =  this.userWallet.connect(this.provider); 
     } else {
       throw new Error('The input string is not an Ethereum private key or mnemonic phrase.'); 
       return;
@@ -193,7 +196,8 @@ export class AppComponent {
 
   async topUpTokens(amount: string)  {
     if (!this.lotteryContract) return;
-    const tx = await this.lotteryContract["purchaseTokens"]({
+    if (!this.signer) return;
+    const tx = await this.lotteryContract.connect(this.signer)["purchaseTokens"]({
       value: ethers.utils.parseEther(amount).div(TOKEN_RATIO)
     });    
     const receipt = await tx.wait();
