@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { ethers, Contract, BigNumber } from 'ethers';
+import { ethers, Contract, BigNumber, Signer } from 'ethers';
 import { env } from '../enviorment/env';
 import lotteryJson from '../assets/Lottery.json';
 import tokenJson from '../assets/LotteryToken.json';
@@ -15,6 +15,7 @@ export class AppComponent {
   blockNumber: number | string | undefined;
   provider: ethers.providers.InfuraProvider;
   userWallet: ethers.Wallet | undefined;
+  signer: string | Signer | undefined;
   importedWallet: boolean;
   userEthBalance: number | undefined;
   userTokenBalance: number | undefined; 
@@ -27,6 +28,7 @@ export class AppComponent {
   prizePool: number | undefined; 
   ownerPool: number | undefined; 
   betsState: String | undefined;
+  logger: String | undefined;
   txHash: string | undefined; 
 
   constructor() {
@@ -38,6 +40,7 @@ export class AppComponent {
 
     // create logic to verify if is or not an imported 
     this.importedWallet = false;
+    this.signer = "";
   };
 
   async syncBlock() {
@@ -97,6 +100,11 @@ export class AppComponent {
         tokenBalanceStr = ethers.utils.formatEther(tokenBalanceBN);
         this.ownerPool = parseFloat(tokenBalanceStr);
       });
+    this.getbetsState();
+  };
+
+  getbetsState(){
+    if (!this.lotteryContract) return;
     this.lotteryContract['betsOpen']()
       .then((betsOpen: boolean) => {
         if (betsOpen){
@@ -106,7 +114,7 @@ export class AppComponent {
         this.betsState = "closed";
         }
       });
-  };
+  }
 
   clearWallet() {
     // Cleans Variables
@@ -164,10 +172,11 @@ export class AppComponent {
     if (isPrivateKey === true) { 
       // for a private key
       this.userWallet = new ethers.Wallet(`${pkey}`, this.provider);
+      this.signer =  this.userWallet.connect(this.provider);
     } else if (isPrivateKey === false) {
       // for mnemonic key
       this.userWallet = ethers.Wallet.fromMnemonic(pkey);
-    
+      this.signer =  this.userWallet.connect(this.provider); 
     } else {
       throw new Error('The input string is not an Ethereum private key or mnemonic phrase.'); 
       return;
@@ -191,10 +200,93 @@ export class AppComponent {
       });
   };
 
-  async topUpTokens(amount: string) {
+  async topUpTokens(amount: string)  {
     if (!this.lotteryContract) return;
-    const tx = await this.lotteryContract["purchaseTokens"]([,{value: ethers.utils.parseEther(amount).div(TOKEN_RATIO)}]);
+    if (!this.signer) return;
+    const tx = await this.lotteryContract.connect(this.signer)["purchaseTokens"]({
+      value: ethers.utils.parseEther(amount).div(TOKEN_RATIO)
+    });    
     const receipt = await tx.wait();
     this.txHash = receipt.transactionHash;
-  }
+    this.logger = "Top Up "+amount+" Tokens Status: Executed"
+  };
+
+  async openBets(duration: string) {
+    if (!this.lotteryContract) return;
+    const currentBlock = await this.provider.getBlock("latest");
+    if (!this.signer) return;
+    const tx = await this.lotteryContract.connect(this.signer)['openBets'](currentBlock.timestamp + Number(duration));
+    const receipt = await tx.wait();
+    this.txHash = receipt.transactionHash;
+    this.getbetsState();
+    this.logger = "Open Bets Executed"
+  };
+
+  async closeLottery() {
+    if (!this.lotteryContract) return;
+    if (!this.signer) return;
+    const tx = await this.lotteryContract.connect(this.signer)['closeLottery']();
+    const receipt = await tx.wait();
+    this.txHash = receipt.transactionHash;
+    this.getbetsState();
+    this.logger = "Close Lottery Executed"
+  };
+
+  async bet(amount: string) {
+    if (!this.tokenContract) return;
+    if (!this.lotteryContract) return;
+    if (!this.signer) return;
+    const allowTx = await this.tokenContract
+      .connect(this.signer)['approve'](this.lotteryContractAddress, ethers.constants.MaxUint256);
+    await allowTx.wait();
+    const tx = await this.lotteryContract.connect(this.signer)['betMany'](amount);
+    const receipt = await tx.wait();
+    this.txHash = receipt.transactionHash;
+    this.logger = "Bets placed"
+  };
+  
+  //async displayPrize(index: string): Promise<string> {
+  //  const prizeBN = await contract.prize(accounts[Number(index)].address);
+  //  const prize = ethers.utils.formatEther(prizeBN);
+  //  console.log(
+  //    `The account of address ${
+  //      accounts[Number(index)].address
+  //    } has earned a prize of ${prize} Tokens\n`
+  //  );
+  //  return prize;
+  //}
+  //
+  //async claimPrize(index: string, amount: string) {
+  //  const tx = await contract
+  //    .connect(accounts[Number(index)])
+  //    .prizeWithdraw(ethers.utils.parseEther(amount));
+  //  const receipt = await tx.wait();
+  //  console.log(`Prize claimed (${receipt.transactionHash})\n`);
+  //}
+  //
+  //async displayOwnerPool() {
+  //  const balanceBN = await contract.ownerPool();
+  //  const balance = ethers.utils.formatEther(balanceBN);
+  //  console.log(`The owner pool has (${balance}) Tokens \n`);
+  //}
+  //
+  //async withdrawTokens(amount: string) {
+  //  const tx = await contract.ownerWithdraw(ethers.utils.parseEther(amount));
+  //  const receipt = await tx.wait();
+  //  console.log(`Withdraw confirmed (${receipt.transactionHash})\n`);
+  //}
+  //
+  //async  burnTokens(index: string, amount: string) {
+  //  const allowTx = await token
+  //    .connect(accounts[Number(index)])
+  //    .approve(contract.address, ethers.constants.MaxUint256);
+  //  const receiptAllow = await allowTx.wait();
+  //  console.log(`Allowance confirmed (${receiptAllow.transactionHash})\n`);
+  //  const tx = await contract
+  //    .connect(accounts[Number(index)])
+  //    .returnTokens(ethers.utils.parseEther(amount));
+  //  const receipt = await tx.wait();
+  //  console.log(`Burn confirmed (${receipt.transactionHash})\n`);
+  //}
+
 }

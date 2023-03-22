@@ -1,4 +1,5 @@
 <div class="px-4 py-5 my-5 text-center">
+
   <h1 class="display-5 fw-bold">Welcome to the Lottery DAPP!</h1>
   <div class="col-lg-6 mx-auto">
     <div class="mt-4" *ngIf="blockNumber && blockNumber > 0">
@@ -13,6 +14,7 @@
         <p>Private Key:</p>
         <input #pKey type="string" class="input">
       </div>
+      <!-- Imported wallet  -->
       <div class="card mt-4 mx-auto" *ngIf="userWallet && importedWallet == true">
         <div class="card-body">
           <h5 class="card-title">User Wallet</h5>
@@ -22,20 +24,17 @@
           </h6>
           <p class="card-text"> Balance: {{ userEthBalance }} ETH </p>
           <p class="card-text"> Balance: {{ userTokenBalance }} LT0 </p>
+          <input #buyAmount  type="number" min="0" max="100" class="input">
           <button 
             type="button"
             class="btn btn-danger btn-lg px-4 gap-3 my-4 mx-2"
-            (click)="topUpTokens(mintAmount.value)">
-            Request Tokens
+            (click)="topUpTokens(buyAmount.value)">
+            TopUp LT0 Tokens
           </button>
-          <p>Amount:</p>
-          <input #mintAmount  type="number" min="1" max="100" class="input">
-          <p *ngIf="txHash"> Transaction: {{ txHash }} </p>
         </div>
-
       </div>
-
-      </div> 
+    </div> 
+      <!-- Only a wallet generator -->
       <div class="card mt-4 mx-auto" *ngIf="userWallet && importedWallet == false">
         <div class="card-body">
           <h5 class="card-title">User Wallet</h5>
@@ -55,6 +54,43 @@
         <p class="mb-0">Once you store it, you might want to get some ether and import it from the main site</p>
       </div>
 
+      <!-- States and Logs Card  -->
+      <div class="card mt-4 mx-auto" *ngIf="importedWallet && tokenContractAddress != undefined">
+        <div class="card-body">
+          <h5 class="card-title">Lottery States and Logs</h5>
+          <p class="card-text"> The lottery is {{ betsState }} ! </p>
+          <p>Set Lottery duration (seconds):</p>
+          <input #duration  type="number" min="0" max="100" class="input">
+          <button 
+            type="button"
+            class="btn btn-success btn-lg px-4 gap-3 my-4 mx-2"
+            (click)="openBets(duration.value)">
+            Open Bets!
+          </button>
+          <button 
+            type="button"
+            class="btn btn-danger btn-lg px-4 gap-3 my-4 mx-2"
+            (click)="closeLottery()">
+            close Bets!
+          </button>
+          <div>
+          <input #betAmount  type="number" min="0" max="100" class="input">
+            <button 
+              type="button"
+              class="btn btn-success btn-lg px-4 gap-3 my-4 mx-2"
+              (click)="bet(betAmount.value)">
+              Bet tokens!
+            </button>
+          </div>
+          <p *ngIf="txHash"> last log: {{ logger }}
+            Transaction: 
+            <a href="https://goerli.etherscan.io/tx/{{ txHash }}"
+              target="_blank">{{ txHash }}</a> 
+          </p>
+        </div>
+      </div>
+
+      <!-- Smart Contracts Information  -->
       <div class="card mt-4 mx-auto" *ngIf="importedWallet && tokenContractAddress != undefined">
         <div class="card-body">
           <h5 class="card-title">Contracts Info</h5>
@@ -68,13 +104,6 @@
           <p class="card-text"> Balance of Lottery: {{ lotteryEthBalance }} ETH </p>
           <p class="card-text"> prizePool: {{ prizePool }} LT0 </p>
           <p class="card-text"> ownerPool: {{ ownerPool }} LT0 </p>
-        </div>
-      </div>
-
-      <div class="card mt-4 mx-auto" *ngIf="importedWallet && tokenContractAddress != undefined">
-        <div class="card-body">
-          <h5 class="card-title">Lottery States</h5>
-          <p class="card-text"> The lottery is {{ betsState }} ! </p>
         </div>
       </div>
 
