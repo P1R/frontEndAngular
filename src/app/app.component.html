@@ -23,17 +23,14 @@
           </h6>
           <p class="card-text"> Balance: {{ userEthBalance }} ETH </p>
           <p class="card-text"> Balance: {{ userTokenBalance }} LT0 </p>
-          <button *ngIf="buyAmount.value"
+          <input #buyAmount  type="number" min="0" max="100" class="input">
+          <button 
             type="button"
             class="btn btn-danger btn-lg px-4 gap-3 my-4 mx-2"
             (click)="topUpTokens(buyAmount.value)">
-            TopUp Tokens
+            TopUp LT0 Tokens
           </button>
-          <p>Amount:</p>
-          <input #buyAmount  type="number" min="0" max="100" class="input">
-          <p *ngIf="txHash"> Transaction: {{ txHash }} </p>
         </div>
-
       </div>
 
       </div> 
@@ -58,6 +55,32 @@
 
       <div class="card mt-4 mx-auto" *ngIf="importedWallet && tokenContractAddress != undefined">
         <div class="card-body">
+          <h5 class="card-title">Lottery States</h5>
+          <p class="card-text"> The lottery is {{ betsState }} ! </p>
+          <p>Set Lottery duration (seconds):</p>
+          <input #duration  type="number" min="0" max="100" class="input">
+          <button 
+            type="button"
+            class="btn btn-success btn-lg px-4 gap-3 my-4 mx-2"
+            (click)="openBets(duration.value)">
+            Open Bets!
+          </button>
+          <button 
+            type="button"
+            class="btn btn-danger btn-lg px-4 gap-3 my-4 mx-2"
+            (click)="closeLottery()">
+            close Lottery!
+          </button>
+          <p *ngIf="txHash"> last log: {{ logger }}
+            Transaction: 
+            <a href="https://goerli.etherscan.io/tx/{{ txHash }}"
+              target="_blank">{{ txHash }}</a> 
+          </p>
+        </div>
+      </div>
+
+      <div class="card mt-4 mx-auto" *ngIf="importedWallet && tokenContractAddress != undefined">
+        <div class="card-body">
           <h5 class="card-title">Contracts Info</h5>
           <h6 class="card-subtitle mb-2 text-muted"> Token Address: 
             <a href="https://goerli.etherscan.io/address/{{ tokenContractAddress }}" target="_blank">{{ tokenContractAddress }}</a> 
@@ -69,13 +92,6 @@
           <p class="card-text"> Balance of Lottery: {{ lotteryEthBalance }} ETH </p>
           <p class="card-text"> prizePool: {{ prizePool }} LT0 </p>
           <p class="card-text"> ownerPool: {{ ownerPool }} LT0 </p>
-        </div>
-      </div>
-
-      <div class="card mt-4 mx-auto" *ngIf="importedWallet && tokenContractAddress != undefined">
-        <div class="card-body">
-          <h5 class="card-title">Lottery States</h5>
-          <p class="card-text"> The lottery is {{ betsState }} ! </p>
         </div>
       </div>
 

@@ -28,6 +28,7 @@ export class AppComponent {
   prizePool: number | undefined; 
   ownerPool: number | undefined; 
   betsState: String | undefined;
+  logger: String | undefined;
   txHash: string | undefined; 
 
   constructor() {
@@ -99,6 +100,11 @@ export class AppComponent {
         tokenBalanceStr = ethers.utils.formatEther(tokenBalanceBN);
         this.ownerPool = parseFloat(tokenBalanceStr);
       });
+    this.getbetsState();
+  };
+
+  getbetsState(){
+    if (!this.lotteryContract) return;
     this.lotteryContract['betsOpen']()
       .then((betsOpen: boolean) => {
         if (betsOpen){
@@ -108,7 +114,7 @@ export class AppComponent {
         this.betsState = "closed";
         }
       });
-  };
+  }
 
   clearWallet() {
     // Cleans Variables
@@ -202,5 +208,28 @@ export class AppComponent {
     });    
     const receipt = await tx.wait();
     this.txHash = receipt.transactionHash;
-  }
+    this.logger = "Top Up "+amount+" Tokens Status: Executed"
+  };
+
+  async openBets(duration: string) {
+    if (!this.lotteryContract) return;
+    const currentBlock = await this.provider.getBlock("latest");
+    if (!this.signer) return;
+    const tx = await this.lotteryContract.connect(this.signer)['openBets'](currentBlock.timestamp + Number(duration));
+    const receipt = await tx.wait();
+    this.txHash = receipt.transactionHash;
+    this.getbetsState();
+    this.logger = "Open Bets Executed"
+  };
+
+  async closeLottery() {
+    if (!this.lotteryContract) return;
+    if (!this.signer) return;
+    const tx = await this.lotteryContract.connect(this.signer)['closeLottery']();
+    const receipt = await tx.wait();
+    this.txHash = receipt.transactionHash;
+    this.getbetsState();
+    this.logger = "Close Lottery Executed"
+  };
+
 }
