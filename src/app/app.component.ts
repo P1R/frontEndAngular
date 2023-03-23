@@ -276,17 +276,22 @@ export class AppComponent {
     this.logger = "Prize claimed";
   }
   
-  //async displayOwnerPool() {
-  //  const balanceBN = await contract.ownerPool();
-  //  const balance = ethers.utils.formatEther(balanceBN);
-  //  console.log(`The owner pool has (${balance}) Tokens \n`);
-  //}
-  //
-  //async withdrawTokens(amount: string) {
-  //  const tx = await contract.ownerWithdraw(ethers.utils.parseEther(amount));
-  //  const receipt = await tx.wait();
-  //  console.log(`Withdraw confirmed (${receipt.transactionHash})\n`);
-  //}
+  async withdrawTokens(amount: string) {
+    if (!this.lotteryContract) return;
+    if (!this.userWallet) return;
+    if (!this.signer) return;
+    const lotteryOwner = await this.lotteryContract
+      .connect(this.signer)['owner']()
+    if ( lotteryOwner == this.userWallet.address){
+      const tx = await this.lotteryContract.connect(this.signer)['ownerWithdraw'](ethers.utils.parseEther(amount));
+      const receipt = await tx.wait();
+      this.txHash = receipt.transactionHash;
+      this.logger = "Owner withdraw confirmed!";
+    } else {
+      this.logger = "You are not the Lottery Owner, the owner is "+this.lotteryContract['owner']();
+      return;
+    }
+  }
   //
   //async  burnTokens(index: string, amount: string) {
   //  const allowTx = await token

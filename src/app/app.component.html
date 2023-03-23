@@ -99,6 +99,15 @@
               Request Prize tokens!
             </button>
           </div>
+          <div>
+          <input #feesAmount  type="number" min="0" max="100" class="input">
+            <button 
+              type="button"
+              class="btn btn-danger btn-lg px-4 gap-3 my-4 mx-2"
+              (click)="withdrawTokens(feesAmount.value)">
+              Owner fees withdraw!
+            </button>
+          </div>
           <p *ngIf="logger">
             last log: {{ logger }}
           </p>
