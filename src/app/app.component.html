@@ -1,18 +1,158 @@
 <div class="px-4 py-5 my-5 text-center">
-  <h1 class="display-5 fw-bold">Hello!</h1>
+
+  <h1 class="display-5 fw-bold">Welcome to the Lottery DAPP!</h1>
   <div class="col-lg-6 mx-auto">
-    <p *ngIf="blockNumber && blockNumber > 0" class="lead mb-4">We are connected to the Goerli Blockchain at the block <strong> {{blockNumber}}</strong></p>
-    <div *ngIf="transactions && transactions.length > 0">
-      <p>Transactions lists:</p>
-      <ul>
-        <li *ngFor="let transaction of transactions; let i = index">
-          Transaction #{{i}}: {{transaction}}
-        </li>
-      </ul>
+    <div class="mt-4" *ngIf="blockNumber && blockNumber > 0">
+      <p class="lead mb-4">We are connected to the Goerli Blockchain at the block <strong> {{blockNumber}}</strong></p>
+      <button type="button"  class="btn btn-success btn-lg px-4 gap-3 my-4 mx-2" (click)="createWallet()">
+        {{userWallet ? "Create another" : "Create"}} Wallet
+      </button>
+      <button type="button"  class="btn btn-danger btn-lg px-4 gap-3 my-4 mx-2" (click)="importWallet(pKey.value)">
+        {{userWallet ? "import another" : "import a"}} Wallet
+      </button>
+      <div>
+        <p>Private Key:</p>
+        <input #pKey type="string" class="input">
+      </div>
+      <!-- Imported wallet  -->
+      <div class="card mt-4 mx-auto" *ngIf="userWallet && importedWallet == true">
+        <div class="card-body">
+          <h5 class="card-title">User Wallet</h5>
+          <h6 class="card-subtitle mb-2 text-muted"> Address: 
+            <a href="https://goerli.etherscan.io/address//{{ userWallet.address }}"
+              target="_blank">{{ userWallet.address }}</a> 
+          </h6>
+          <p class="card-text"> Balance: {{ userEthBalance }} ETH </p>
+          <p class="card-text"> Balance: {{ userTokenBalance }} LT0 </p>
+          <input #buyAmount  type="number" min="0" max="100" class="input">
+          <button 
+            type="button"
+            class="btn btn-danger btn-lg px-4 gap-3 my-4 mx-2"
+            (click)="topUpTokens(buyAmount.value)">
+            TopUp LT0 Tokens
+          </button>
+        </div>
+      </div>
+    </div> 
+      <!-- Only a wallet generator -->
+      <div class="card mt-4 mx-auto" *ngIf="userWallet && importedWallet == false">
+        <div class="card-body">
+          <h5 class="card-title">User Wallet</h5>
+          <h6 class="card-subtitle mb-2 text-muted"> Address: 
+            <a href="https://goerli.etherscan.io/address//{{ userWallet.address }}"
+              target="_blank">{{ userWallet.address }}</a> 
+          </h6>
+          <p class="card-text"> PRIVATE KEY: {{ userWallet.privateKey }} </p>
+          <p class="card-text"> Balance: {{ userEthBalance }} ETH </p>
+          <p class="card-text"> Balance: {{ userTokenBalance }} LT0 </p>
+        </div>
+      </div> 
+      <div  *ngIf="userWallet && importedWallet == false" class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">IMPORTANT!</h4>
+        <p>STORE THE PRIVATE KEY IN A SAFE PLACE.</p>
+        <hr>
+        <p class="mb-0">Once you store it, you might want to get some ether and import it from the main site</p>
+      </div>
+
+      <!-- States and Logs Card  -->
+      <div class="card mt-4 mx-auto" *ngIf="importedWallet && tokenContractAddress != undefined">
+        <div class="card-body">
+          <h5 class="card-title">Lottery States and Logs</h5>
+          <p class="card-text"> The lottery is {{ betsState }} ! </p>
+          <p>Set Lottery duration (seconds):</p>
+          <input #duration  type="number" min="0" max="100" class="input">
+          <button 
+            type="button"
+            class="btn btn-success btn-lg px-4 gap-3 my-4 mx-2"
+            (click)="openBets(duration.value)">
+            Open Bets!
+          </button>
+          <button 
+            type="button"
+            class="btn btn-danger btn-lg px-4 gap-3 my-4 mx-2"
+            (click)="closeLottery()">
+            close Bets!
+          </button>
+          <div>
+          <input #betAmount  type="number" min="0" max="100" class="input">
+            <button 
+              type="button"
+              class="btn btn-success btn-lg px-4 gap-3 my-4 mx-2"
+              (click)="bet(betAmount.value)">
+              Bet tokens!
+            </button>
+          </div>
+          <div>
+            <button 
+              type="button"
+              class="btn btn-success btn-lg px-4 gap-3 my-4 mx-2"
+              (click)="displayPrize()">
+              Check for Prize Winner!
+            </button>
+          </div>
+          <div>
+          <input #prizeAmount  type="number" min="0" max="100" class="input">
+            <button 
+              type="button"
+              class="btn btn-success btn-lg px-4 gap-3 my-4 mx-2"
+              (click)="claimPrize(prizeAmount.value)">
+              Request Prize tokens!
+            </button>
+          </div>
+          <div>
+          <input #feesAmount  type="number" min="0" max="100" class="input">
+            <button 
+              type="button"
+              class="btn btn-success btn-lg px-4 gap-3 my-4 mx-2"
+              (click)="withdrawTokens(feesAmount.value)">
+              Owner fees withdraw!
+            </button>
+          </div>
+          <div>
+          <input #burnAmount  type="number" min="0" max="100" class="input">
+            <button 
+              type="button"
+              class="btn btn-danger btn-lg px-4 gap-3 my-4 mx-2"
+              (click)="burnTokens(burnAmount.value)">
+              burn Tokens!
+            </button>
+          <p *ngIf="txAllow">
+            Transaction Allowance: 
+            <a href="https://goerli.etherscan.io/tx/{{ txHash }}"
+              target="_blank">{{ txAllow }}</a> 
+          </p>
+          </div>
+          <p *ngIf="logger">
+            last log: {{ logger }}
+          </p>
+          <p *ngIf="txHash"> 
+            Transaction: 
+            <a href="https://goerli.etherscan.io/tx/{{ txHash }}"
+              target="_blank">{{ txHash }}</a> 
+          </p>
+        </div>
+      </div>
+
+      <!-- Smart Contracts Information  -->
+      <div class="card mt-4 mx-auto" *ngIf="importedWallet && tokenContractAddress != undefined">
+        <div class="card-body">
+          <h5 class="card-title">Contracts Info</h5>
+          <h6 class="card-subtitle mb-2 text-muted"> Token Address: 
+            <a href="https://goerli.etherscan.io/address/{{ tokenContractAddress }}" target="_blank">{{ tokenContractAddress }}</a> 
+          </h6>
+          <p class="card-text"> Total Supply: {{ tokenTotalSupply }} LT0 </p>
+          <h6 class="card-subtitle mb-2 text-muted"> Lottery Address: 
+            <a href="https://goerli.etherscan.io/address/{{ lotteryContractAddress }}" target="_blank">{{ lotteryContractAddress }}</a> 
+          </h6>
+          <p class="card-text"> Balance of Lottery: {{ lotteryEthBalance }} ETH </p>
+          <p class="card-text"> prizePool: {{ prizePool }} LT0 </p>
+          <p class="card-text"> ownerPool: {{ ownerPool }} LT0 </p>
+        </div>
+      </div>
+
     </div>
-    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
-      <button type="button" class="btn btn-primary btn-lg px-4 gap-3" (click)="syncBlock()">Sync</button>
-      <button type="button" class="btn btn-outline-secondary btn-lg px-4" (click)="clearBlock()">Clear</button>
-    </div>
+    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4">
+    <button type="button" class="btn btn-primary btn-lg px-4 gap-3" (click)="syncBlock()">Sync</button>
+    <button type="button" class="btn btn-outline-secondary btn-lg px-4" (click)="clearWallet()">Clear</button>
   </div>
 </div>
