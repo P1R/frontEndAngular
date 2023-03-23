@@ -24,7 +24,7 @@ export class AppComponent {
   tokenTotalSupply: number | string | undefined;
   lotteryContractAddress: string | undefined;
   lotteryContract: Contract | undefined;
-  lotteryEthBalance: BigNumber | number | undefined;
+  lotteryEthBalance: number | undefined;
   prizePool: number | undefined; 
   ownerPool: number | undefined; 
   winnerPrize: string | number | undefined; 
@@ -55,6 +55,7 @@ export class AppComponent {
     });
     this.lotteryContractAddress = "0x2F0cF8a8ffAa5e406aD4f158891931292740aFEC"
     this.updateLotteryInfo();
+    this.getLotteryBalance();
     // links and gets the token contract address 
     // from the lottery Contract
     if (!this.lotteryContract) return;
@@ -78,15 +79,16 @@ export class AppComponent {
   };
 
   async getLotteryBalance() {
-    if (!this.lotteryContract) return;
+    if (!this.provider) return;
+    if (!this.lotteryContractAddress) return;
     let ethBalanceStr;
     if (!this.userWallet) return;
-    this.lotteryContract['getBalance']()
+    this.provider['getBalance'](this.lotteryContractAddress)
       .then((ethBalanceBN: BigNumber) => {
         ethBalanceStr = ethers.utils.formatEther(ethBalanceBN);
         this.lotteryEthBalance = parseFloat(ethBalanceStr);
       });
-    this.logger = `The contract has a balance of ${this.lotteryEthBalance} ETH`;
+    this.logger = "The contract has a balance of "+this.lotteryEthBalance+" ETH";
   };
 
   async updateLotteryInfo() {
@@ -99,7 +101,6 @@ export class AppComponent {
     );
 
     // get eth balance from the lottery contract
-    // TODO: LookUp for Bug! (it doesn't updates)
     this.getLotteryBalance();
 
     // Gets the userTokenBalance from the imported Wallet
@@ -198,6 +199,8 @@ export class AppComponent {
     // Clean previous Balances display 
     this.userEthBalance  = 0;
     this.userTokenBalance = 0;
+    // get the lottery Contract balance
+    this.getLotteryBalance();
     // Get the ETH balance from the imported Wallet
     this.userWallet.getBalance().then((balanceBN) => {
       const balanceStr = ethers.utils.formatEther(balanceBN);
