@@ -82,7 +82,27 @@
               Bet tokens!
             </button>
           </div>
-          <p *ngIf="txHash"> last log: {{ logger }}
+          <div>
+            <button 
+              type="button"
+              class="btn btn-success btn-lg px-4 gap-3 my-4 mx-2"
+              (click)="displayPrize()">
+              Check for Prize Winner!
+            </button>
+          </div>
+          <div>
+          <input #prizeAmount  type="number" min="0" max="100" class="input">
+            <button 
+              type="button"
+              class="btn btn-success btn-lg px-4 gap-3 my-4 mx-2"
+              (click)="claimPrize(prizeAmount.value)">
+              Request Prize tokens!
+            </button>
+          </div>
+          <p *ngIf="logger">
+            last log: {{ logger }}
+          </p>
+          <p *ngIf="txHash"> 
             Transaction: 
             <a href="https://goerli.etherscan.io/tx/{{ txHash }}"
               target="_blank">{{ txHash }}</a> 

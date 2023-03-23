@@ -24,9 +24,10 @@ export class AppComponent {
   tokenTotalSupply: number | string | undefined;
   lotteryContractAddress: string | undefined;
   lotteryContract: Contract | undefined;
-  lotteryEthBalance: number | undefined;
+  lotteryEthBalance: BigNumber | number | undefined;
   prizePool: number | undefined; 
   ownerPool: number | undefined; 
+  winnerPrize: string | number | undefined; 
   betsState: String | undefined;
   logger: String | undefined;
   txHash: string | undefined; 
@@ -53,7 +54,8 @@ export class AppComponent {
     });
     this.lotteryContractAddress = "0x2F0cF8a8ffAa5e406aD4f158891931292740aFEC"
     this.updateLotteryInfo();
-    //TODO
+    // links and gets the token contract address 
+    // from the lottery Contract
     if (!this.lotteryContract) return;
     this.tokenContractAddress = await this.lotteryContract['paymentToken']()
     this.updateTokenInfo();
@@ -74,7 +76,19 @@ export class AppComponent {
     });
   };
 
-  updateLotteryInfo() {
+  async getLotteryBalance() {
+    if (!this.lotteryContract) return;
+    let ethBalanceStr;
+    if (!this.userWallet) return;
+    this.lotteryContract['getBalance']()
+      .then((ethBalanceBN: BigNumber) => {
+        ethBalanceStr = ethers.utils.formatEther(ethBalanceBN);
+        this.lotteryEthBalance = parseFloat(ethBalanceStr);
+      });
+    this.logger = `The contract has a balance of ${this.lotteryEthBalance} ETH`;
+  };
+
+  async updateLotteryInfo() {
     let tokenBalanceStr;
     if (!this.lotteryContractAddress) return;
     this.lotteryContract = new Contract(
@@ -82,13 +96,11 @@ export class AppComponent {
       lotteryJson.abi,
       this.provider
     );
-    // ToDo Fix Issue....
-    // Get the ETH balance from the Lottery Contract
-    //this.lotteryContract['getBalance']().then((balanceBN: BigNumber) => {
-    //  const balanceStr = ethers.utils.formatEther(balanceBN);
-    //  this.lotteryEthBalance = parseFloat(balanceStr);
-    //this.importedWallet = true;
-    //}) 
+
+    // get eth balance from the lottery contract
+    // TODO: LookUp for Bug! (it doesn't updates)
+    this.getLotteryBalance();
+
     // Gets the userTokenBalance from the imported Wallet
     this.lotteryContract['prizePool']()
       .then((tokenBalanceBN: BigNumber) => {
@@ -245,25 +257,25 @@ export class AppComponent {
     this.logger = "Bets placed"
   };
   
-  //async displayPrize(index: string): Promise<string> {
-  //  const prizeBN = await contract.prize(accounts[Number(index)].address);
-  //  const prize = ethers.utils.formatEther(prizeBN);
-  //  console.log(
-  //    `The account of address ${
-  //      accounts[Number(index)].address
-  //    } has earned a prize of ${prize} Tokens\n`
-  //  );
-  //  return prize;
-  //}
-  //
-  //async claimPrize(index: string, amount: string) {
-  //  const tx = await contract
-  //    .connect(accounts[Number(index)])
-  //    .prizeWithdraw(ethers.utils.parseEther(amount));
-  //  const receipt = await tx.wait();
-  //  console.log(`Prize claimed (${receipt.transactionHash})\n`);
-  //}
-  //
+  async displayPrize() {
+    if (!this.lotteryContract) return;
+    if (!this.userWallet) return;
+    const prizeBN = await this.lotteryContract["prize"](
+      this.userWallet.address
+    );
+    this.winnerPrize = ethers.utils.formatEther(prizeBN);
+    this.logger = "you have earned earned a prize of "+this.winnerPrize+" LT0 Tokens";
+  }
+  
+  async claimPrize(amount: string) {
+    if (!this.lotteryContract) return;
+    if (!this.signer) return;
+    const tx = await this.lotteryContract.connect(this.signer)['prizeWithdraw'](ethers.utils.parseEther(amount));
+    const receipt = await tx.wait();
+    this.txHash = receipt.transactionHash;
+    this.logger = "Prize claimed";
+  }
+  
   //async displayOwnerPool() {
   //  const balanceBN = await contract.ownerPool();
   //  const balance = ethers.utils.formatEther(balanceBN);
