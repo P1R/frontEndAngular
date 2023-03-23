@@ -28,8 +28,9 @@ export class AppComponent {
   prizePool: number | undefined; 
   ownerPool: number | undefined; 
   winnerPrize: string | number | undefined; 
-  betsState: String | undefined;
-  logger: String | undefined;
+  betsState: string | undefined;
+  logger: string | undefined;
+  txAllow: string | undefined;
   txHash: string | undefined; 
 
   constructor() {
@@ -292,18 +293,24 @@ export class AppComponent {
       return;
     }
   }
-  //
-  //async  burnTokens(index: string, amount: string) {
-  //  const allowTx = await token
-  //    .connect(accounts[Number(index)])
-  //    .approve(contract.address, ethers.constants.MaxUint256);
-  //  const receiptAllow = await allowTx.wait();
-  //  console.log(`Allowance confirmed (${receiptAllow.transactionHash})\n`);
-  //  const tx = await contract
-  //    .connect(accounts[Number(index)])
-  //    .returnTokens(ethers.utils.parseEther(amount));
-  //  const receipt = await tx.wait();
-  //  console.log(`Burn confirmed (${receipt.transactionHash})\n`);
-  //}
+  
+  async  burnTokens(amount: string) {
+    if (!this.tokenContract) return;
+    if (!this.lotteryContract) return;
+    if (!this.signer) return;
+    const allowTx = await this.tokenContract
+      .connect(this.signer)
+      ['approve'](this.tokenContractAddress, ethers.constants.MaxUint256);
+    const receiptAllow = await allowTx.wait();
+    this.txAllow = receiptAllow.transactionHash;
+    this.logger = "Allowance confirmed";
+
+    const tx = await this.lotteryContract
+      .connect(this.signer)
+      ['returnTokens'](ethers.utils.parseEther(amount));
+    const receipt = await tx.wait();
+    this.txHash = receipt.transactionHash;
+    this.logger = "Burn confirmed";
+  }
 
 }
